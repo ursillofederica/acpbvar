@@ -3,7 +3,7 @@
 #' End-to-end wrapper: prepares the equation-by-equation responses and
 #' regressors, fits univariate AR variance estimates, optimises the Minnesota
 #' tightness via Empirical Bayes, constructs the asymmetric prior, and runs
-#' the conjugate Gibbs sampler equation by equation for `R` iterations.
+#' draws `R` independent posterior samples, equation by equation.
 #'
 #' @param Y A `T x n` numeric matrix of observations on the endogenous
 #'   variables.
@@ -18,7 +18,8 @@
 #'
 #' @return A list with `samples` (the posterior draws of `theta` and
 #'   `sigma2`), `spec` (sampler configuration, optimised tightness, log
-#'   marginal likelihood, residual variances, variable names), and `dat`
+#'   marginal likelihood, the `convergence` code returned by [stats::optim()]
+#'   for the hyperparameter search, residual variances, variable names), and `dat`
 #'   (the prepared response/regressor objects).
 #'
 #' @export
@@ -34,6 +35,9 @@ post_sim <- function(Y, p, R,
 
     opt <- optim_hyper(dat$y_list, dat$X_list, p, s2out$s2,
                        kappa3, unit_root_mean)
+    if (opt$convergence != 0)
+        warning(sprintf("optim_hyper did not converge (code %d); kappa estimates may be unreliable.",
+                        opt$convergence), call. = FALSE)
 
     prior <- build_prior_asym(dat$y_list, p, s2out$s2,
                               opt$kappa1, opt$kappa2, kappa3, unit_root_mean)
@@ -72,6 +76,7 @@ post_sim <- function(Y, p, R,
             R         = R,
             kappa     = c(kappa1 = opt$kappa1, kappa2 = opt$kappa2),
             log_ml    = opt$log_ml,
+            convergence = opt$convergence,
             s2        = s2out$s2,
             var_names = var_names
         ),

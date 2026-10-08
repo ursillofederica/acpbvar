@@ -35,12 +35,13 @@ at one. Default \code{FALSE}.}
 \value{
 A list with \code{samples} (the posterior draws of \code{theta} and
 \code{sigma2}), \code{spec} (sampler configuration, optimised tightness, log
-marginal likelihood, residual variances, variable names), and \code{dat}
+marginal likelihood, the \code{convergence} code returned by \code{\link[stats:optim]{stats::optim()}}
+for the hyperparameter search, residual variances, variable names), and \code{dat}
 (the prepared response/regressor objects).
 }
 \description{
 End-to-end wrapper: prepares the equation-by-equation responses and
 regressors, fits univariate AR variance estimates, optimises the Minnesota
 tightness via Empirical Bayes, constructs the asymmetric prior, and runs
-the conjugate Gibbs sampler equation by equation for \code{R} iterations.
+draws \code{R} independent posterior samples, equation by equation.
 }

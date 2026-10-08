@@ -7,7 +7,7 @@
 #'
 #' @param impact The candidate `n_var x n_shock` impact matrix.
 #' @param S An `n_id x n_var` matrix of sign restrictions.
-#' @param n_id Integer; number of identified shocks (defaults to `ncol(S)`).
+#' @param n_id Integer; number of identified shocks (defaults to `nrow(S)`).
 #' @param tol Numeric tolerance below which violations are ignored.
 #'
 #' @return `TRUE` if the candidate satisfies the restrictions, otherwise
@@ -20,7 +20,7 @@ check_sign <- function(impact, S, n_id, tol = 1e-12) {
     # S[k, j] = required sign for variable j under shock k
     # impact[j, k] = response of variable j to shock k
     for (k in seq_len(n_id)) {
-        for (j in seq_len(nrow(S))) {
+        for (j in seq_len(ncol(S))) {
             if (S[k, j] ==  1 && impact[j, k] < -tol) return(FALSE)
             if (S[k, j] == -1 && impact[j, k] >  tol) return(FALSE)
         }
@@ -41,18 +41,25 @@ check_sign <- function(impact, S, n_id, tol = 1e-12) {
 #'
 #' @param mcmc A posterior object produced by [post_sim()].
 #' @param S An `n_id x n_var` matrix of sign restrictions.
-#' @param n_id Number of identified shocks (defaults to `ncol(S)`).
+#' @param n_id Number of identified shocks (defaults to `nrow(S)`).
 #' @param max_tries Maximum number of `Q` candidates per posterior draw before
-#'   moving on. Default `10000`.
+#'   moving on. Default `10000`. Draws for which no rotation
+#'   is found are dropped from the output and listed in the `failed_draws`
+#'   attribute. This is the intended behaviour when the identified set of a
+#'   draw is empty, but it also removes draws whose identified set is small
+#'   relative to `max_tries`. Check that `max(attr(x, "n_tries"))` is well
+#'   below `max_tries`: if it is close to it, the limit is binding and
+#'   `max_tries` should be increased.
 #' @param verbose Logical; print a progress bar and acceptance summary.
 #'
 #' @return A list of length equal to the number of accepted draws; each entry
-#'   contains `draw_id`, `impact`, `Q`, `B_rf`, `Sigma_rf`. The vector of
-#'   `Q`-candidate counts required for each acceptance is attached as
-#'   `attr(., "n_tries")`.
+#'   contains `draw_id`, `impact`, `Q`, `B_rf`, `Sigma_rf`.
+#'   The result carries two attributes: `"n_tries"`, the number of `Q`
+#'   candidates needed for each accepted draw, and `"failed_draws"`, the
+#'   indices of the posterior draws dropped after `max_tries`.
 #'
 #' @export
-sign_restrict <- function(mcmc, S, n_id = ncol(S), max_tries = 10000, verbose = TRUE){
+sign_restrict <- function(mcmc, S, n_id = nrow(S), max_tries = 10000, verbose = TRUE){
 
     R_tot <- mcmc$spec$R
     n     <- mcmc$spec$n
@@ -65,7 +72,8 @@ sign_restrict <- function(mcmc, S, n_id = ncol(S), max_tries = 10000, verbose = 
         d
     })
     accepted  <- list()
-    n_tries_v <- integer(0)   # Q draws needed per accepted draw
+    n_tries_v <- integer(0) # Q draws needed per accepted draw
+    failed    <- integer(0)
 
     if (verbose) {
         pb <- utils::txtProgressBar(min = 0, max = R_tot, style = 3)
@@ -114,12 +122,14 @@ sign_restrict <- function(mcmc, S, n_id = ncol(S), max_tries = 10000, verbose = 
             }
             if (found) break
         }
+        if (!found) failed <- c(failed, s)
         if (verbose) utils::setTxtProgressBar(pb, s)
     }
 
     if (verbose) {
-        cat(sprintf("\nAccepted %d / %d draws (%.1f%%)\n",
-                    length(accepted), R_tot, 100 * length(accepted) / R_tot))
+        cat(sprintf("\nAccepted %d / %d draws (%.1f%%); %d draws dropped after %d tries\n",
+                    length(accepted), R_tot, 100 * length(accepted) / R_tot,
+                    length(failed), max_tries))
         if (length(n_tries_v) > 0) {
             cat(sprintf("Q draws per acceptance: mean=%.1f, median=%d, max=%d\n",
                         mean(n_tries_v), stats::median(n_tries_v), max(n_tries_v)))
@@ -128,8 +138,17 @@ sign_restrict <- function(mcmc, S, n_id = ncol(S), max_tries = 10000, verbose = 
             cat(sprintf("Implied per-flip prob: %.6f  (per-Q prob: %.4f)\n",
                         p_per_flip, 1/mean(n_tries_v)))
         }
+
+
+    }
+
+    if (length(failed) > 0){
+        warning(sprintf(paste0("%d of %d posterior draws dropped: no rotation found within max_tries = %d. ",
+                               "If max(attr(., 'n_tries')) is close to max_tries, increase it."),
+                        length(failed), R_tot, max_tries), call. = FALSE)
     }
 
     attr(accepted, "n_tries") <- n_tries_v
+    attr(accepted, "failed_draws") <- failed
     accepted
 }

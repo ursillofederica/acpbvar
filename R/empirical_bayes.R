@@ -87,7 +87,6 @@ optim_hyper <- function(y_list, X_list, p, s2,
     neg_log_ml <- function(log_kappa) {
         k1 <- exp(log_kappa[1])
         k2 <- exp(log_kappa[2])
-        if (k1 >= 1 || k2 >= 1 || k1 <= 0 || k2 <= 0) return(1e10)
         -log_mlik_asym(y_list, X_list, p, s2, k1, k2, kappa3, unit_root_mean)
     }
 

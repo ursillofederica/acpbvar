@@ -11,7 +11,7 @@ check_sign(impact, S, n_id, tol = 1e-12)
 
 \item{S}{An \verb{n_id x n_var} matrix of sign restrictions.}
 
-\item{n_id}{Integer; number of identified shocks (defaults to \code{ncol(S)}).}
+\item{n_id}{Integer; number of identified shocks (defaults to \code{nrow(S)}).}
 
 \item{tol}{Numeric tolerance below which violations are ignored.}
 }

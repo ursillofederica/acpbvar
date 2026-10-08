@@ -1,4 +1,4 @@
-#' Single-equation conjugate Gibbs draw
+#' Single-equation Normal-Inverse-Gamma posterior draw
 #'
 #' Draws posterior values for the structural variance and coefficient vector
 #' of a single equation in the A-form representation, exploiting Normal-
@@ -58,7 +58,7 @@ draw <- function(y, X, nu, m, V, S) {
 }
 
 
-#' Equation-by-equation conjugate Gibbs sweep
+#' Equation-by-equation posterior draw
 #'
 #' Loops [draw()] across all equations and collects the per-equation posterior
 #' draws into list/vector containers.
