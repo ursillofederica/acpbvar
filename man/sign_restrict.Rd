@@ -40,3 +40,24 @@ sign normalisation on the diagonal of \code{R}); for each candidate, all
 \code{2^n_id} sign flips on the columns are checked against the restrictions,
 and the first accepted rotation is stored.
 }
+\examples{
+sim  <- simulate_var_example(T = 120, seed = 1)
+mcmc <- post_sim(sim$Y, p = 1L, R = 200L)
+
+# Rows: identified shocks. Columns: variables (output, inflation, rate).
+# +1 / -1 restrict the sign of the impact response, 0 leaves it free.
+S <- rbind(supply   = c( 1, -1,  0),
+           demand   = c( 1,  1,  0),
+           monetary = c(-1, -1,  1))
+
+acc <- sign_restrict(mcmc, S, max_tries = 500L, verbose = FALSE)
+length(acc)                           # accepted draws (one rotation each)
+acc[[1]]$impact                       # impact matrix of the first draw
+summary(attr(acc, "n_tries"))         # rotations screened per acceptance;
+                                      # compare the max with max_tries
+attr(acc, "failed_draws")             # draws dropped after max_tries
+
+# Partial identification: two shocks, the third column is left free
+S2  <- S[1:2, ]
+acc2 <- sign_restrict(mcmc, S2, max_tries = 500L, verbose = FALSE)
+}

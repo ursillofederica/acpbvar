@@ -24,3 +24,13 @@ Iterates the companion form for \code{H + 1} periods to deliver the structural
 impulse responses for the given impact matrix and reduced-form coefficient
 matrix.
 }
+\examples{
+sim  <- simulate_var_example(T = 120, seed = 1)
+mcmc <- post_sim(sim$Y, p = 1L, R = 50L)
+S    <- rbind(c(1, -1, 0), c(1, 1, 0), c(-1, -1, 1))
+acc  <- sign_restrict(mcmc, S, max_tries = 500L, verbose = FALSE)
+
+irf1 <- compute_irf(acc[[1]]$impact, acc[[1]]$B_rf, n = 3L, p = 1L, H = 8L)
+dim(irf1)                   # variable x horizon (0..H) x shock
+irf1[1, , 3]                # response of variable 1 to shock 3 over horizons
+}

@@ -25,3 +25,10 @@ For each variable, fits an autoregression (with fallback to lower orders if
 the requested order fails) and extracts the residual variance. The resulting
 variances enter the asymmetric Minnesota prior as scaling factors.
 }
+\examples{
+sim <- simulate_var_example(T = 120, seed = 1)
+dat <- build_yX(sim$Y, p = 1L)
+s2  <- build_s2(dat$y_list)$s2
+s2                          # AR(4) residual variances, one per variable;
+                            # they scale the Minnesota prior
+}

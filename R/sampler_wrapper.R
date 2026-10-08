@@ -22,6 +22,14 @@
 #'   for the hyperparameter search, residual variances, variable names), and `dat`
 #'   (the prepared response/regressor objects).
 #'
+#' @examples
+#' sim  <- simulate_var_example(T = 120, seed = 1)
+#' mcmc <- post_sim(sim$Y, p = 1L, R = 200L)
+#'
+#' mcmc$spec$kappa             # tightness chosen by Empirical Bayes
+#' mcmc$spec$convergence       # 0 = optimiser converged
+#' dim(mcmc$samples$sigma2)    # R draws x n equations
+#' length(mcmc$samples$theta)  # R draws, each a list of n coefficient vectors
 #' @export
 post_sim <- function(Y, p, R,
                      kappa3 = 100, unit_root_mean = FALSE,

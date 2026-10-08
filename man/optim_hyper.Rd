@@ -40,3 +40,13 @@ likelihood. Optimisation is performed by Nelder-Mead in log-space, with the
 transformation \code{kappa = exp(log_kappa)} ensuring positivity; values outside
 the unit interval are penalised with a large constant.
 }
+\examples{
+sim <- simulate_var_example(T = 120, seed = 1)
+dat <- build_yX(sim$Y, p = 1L)
+s2  <- build_s2(dat$y_list)$s2
+
+opt <- optim_hyper(dat$y_list, dat$X_list, p = 1L, s2 = s2)
+opt$kappa1                  # own-lag tightness (larger = looser)
+opt$kappa2                  # cross-lag tightness, usually much smaller
+opt$convergence             # 0 means the optimiser converged
+}

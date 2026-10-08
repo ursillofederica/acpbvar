@@ -23,6 +23,14 @@
 #'     \item{`TT`}{Effective sample size after lag truncation.}
 #'   }
 #'
+#' @examples
+#' sim <- simulate_var_example(T = 120, seed = 1)
+#' dat <- build_yX(sim$Y, p = 1L)
+#'
+#' length(dat$y_list)          # one response vector per equation
+#' sapply(dat$X_list, ncol)    # 4, 5, 6: intercept + n*p lags, plus the
+#'                             # contemporaneous variables ordered before
+#'                             # the equation (entered with a minus sign)
 #' @export
 build_yX <- function(Y, p) {
 
@@ -85,6 +93,12 @@ build_yX <- function(Y, p) {
 #'     \item{`S`}{Diagonal matrix `diag(s2)`.}
 #'   }
 #'
+#' @examples
+#' sim <- simulate_var_example(T = 120, seed = 1)
+#' dat <- build_yX(sim$Y, p = 1L)
+#' s2  <- build_s2(dat$y_list)$s2
+#' s2                          # AR(4) residual variances, one per variable;
+#'                             # they scale the Minnesota prior
 #' @export
 build_s2 <- function(y_list, ar.lags = 4) {
     if (!is.list(y_list) || length(y_list) < 1 || !all(vapply(y_list, is.numeric, logical(1))))

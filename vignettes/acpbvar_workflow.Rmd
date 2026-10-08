@@ -158,6 +158,59 @@ n_tries <- attr(accepted, "n_tries")
 summary(n_tries)
 ```
 
+### Partial identification
+
+Not every shock needs a name. If only some shocks are of interest, `S`
+has one row per identified shock and fewer rows than variables; the
+remaining columns of the rotation are left unrestricted and are not
+labelled as anything. With the default `n_id = nrow(S)` this is all that
+is required:
+
+```{r}
+S_partial <- S[c("supply", "demand"), ]
+S_partial
+
+accepted_partial <- sign_restrict(mcmc, S_partial, max_tries = 1000L, verbose = FALSE)
+length(accepted_partial)
+```
+
+Every row of `S` must contain at least one non-zero entry: a row of
+zeros would declare a shock as identified while imposing nothing on it,
+and its sign would then be fixed by the order in which sign flips are
+tried rather than by an economic hypothesis.
+
+### Reading the diagnostics
+
+Three numbers tell whether the output can be trusted.
+
+```{r}
+mcmc$spec$convergence
+```
+
+`convergence` is the code returned by `optim()` for the Empirical Bayes
+search over \((\kappa_1, \kappa_2)\): `0` means it converged, anything else
+means the tightness values in `mcmc$spec$kappa` are where the optimiser
+stopped, not an optimum, and `post_sim()` will have warned.
+
+```{r}
+attr(accepted, "failed_draws")
+```
+
+`failed_draws` lists the posterior draws for which no rotation satisfying
+`S` was found within `max_tries`. Dropping such draws is the intended
+behaviour when the identified set of a draw is empty; it is a problem
+only when the limit itself is binding. The way to tell:
+
+```{r}
+max(attr(accepted, "n_tries"))
+```
+
+If the largest number of rotations needed for an acceptance is well below
+`max_tries`, the dropped draws are the ones with an empty identified set.
+If it is close to `max_tries`, the limit is cutting off draws that would
+have been accepted with more attempts, and `max_tries` should be raised
+until this stops happening.
+
 ## 6. Impulse responses
 
 `collect_irfs()` stacks the per-draw impulse responses into a single
@@ -184,6 +237,34 @@ construction: the supply column is positive on output and negative on
 inflation; the demand column is positive on both; the monetary column is
 negative on output and inflation, positive on the interest rate.
 
+### Numbers rather than pictures
+
+The array `irfs` is indexed as variable x horizon x shock x draw, with
+horizon `h` stored in position `h + 1`. Posterior summaries at a chosen
+horizon are a quantile over the last index.
+
+```{r}
+h <- 4L
+resp <- irfs[, h + 1, , ]                  # variable x shock x draw
+med  <- apply(resp, c(1, 2), stats::median)
+lo   <- apply(resp, c(1, 2), stats::quantile, probs = 0.16)
+hi   <- apply(resp, c(1, 2), stats::quantile, probs = 0.84)
+dimnames(med) <- dimnames(lo) <- dimnames(hi) <- list(sim$var_names, sim$shock_names)
+
+round(med, 3)                               # posterior median at horizon 4
+round(lo, 3)                                # 16th percentile
+round(hi, 3)                                # 84th percentile
+```
+
+The same construction with a vector of horizons gives the full path of
+one response:
+
+```{r}
+path <- apply(irfs[1, , 3, ], 1, stats::quantile, probs = c(0.16, 0.5, 0.84))
+colnames(path) <- paste0("h", 0:H)
+round(path, 3)                              # output after a monetary shock
+```
+
 ## 7. Recovery of the true impact
 
 Averaging the impact column across accepted draws gives a posterior
@@ -207,6 +288,43 @@ identify the impact matrix only up to an orthogonal transformation
 within the admissible set, so exact numerical recovery is not the
 relevant standard; the recovery of the qualitative pattern, and of the
 order of magnitude of the entries, is.
+
+## 8. Common mistakes
+
+Every exported function checks its arguments and stops with a message
+that names the argument and says what was expected. The chunks below are
+run with `error = TRUE` so that the messages are shown.
+
+A data frame instead of a matrix:
+
+```{r, error = TRUE}
+post_sim(as.data.frame(Y), p = 1L, R = 100L)
+```
+
+A lag order that is not an integer:
+
+```{r, error = TRUE}
+post_sim(Y, p = 1.5, R = 100L)
+```
+
+Sign restrictions with the wrong orientation (variables on the rows) in a
+model with a different number of variables, or with an entry outside
+`{-1, 0, 1}`:
+
+```{r, error = TRUE}
+sign_restrict(mcmc, S[, 1:2])
+```
+
+```{r, error = TRUE}
+S_bad <- S; S_bad[1, 1] <- 2
+sign_restrict(mcmc, S_bad)
+```
+
+A horizon count that is inconsistent with the accepted draws:
+
+```{r, error = TRUE}
+collect_irfs(accepted, n = 2L, p = p, H = 12L)
+```
 
 ## References
 

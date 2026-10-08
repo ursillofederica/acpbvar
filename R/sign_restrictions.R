@@ -58,6 +58,26 @@ check_sign <- function(impact, S, n_id, tol = 1e-12) {
 #'   candidates needed for each accepted draw, and `"failed_draws"`, the
 #'   indices of the posterior draws dropped after `max_tries`.
 #'
+#' @examples
+#' sim  <- simulate_var_example(T = 120, seed = 1)
+#' mcmc <- post_sim(sim$Y, p = 1L, R = 200L)
+#'
+#' # Rows: identified shocks. Columns: variables (output, inflation, rate).
+#' # +1 / -1 restrict the sign of the impact response, 0 leaves it free.
+#' S <- rbind(supply   = c( 1, -1,  0),
+#'            demand   = c( 1,  1,  0),
+#'            monetary = c(-1, -1,  1))
+#'
+#' acc <- sign_restrict(mcmc, S, max_tries = 500L, verbose = FALSE)
+#' length(acc)                           # accepted draws (one rotation each)
+#' acc[[1]]$impact                       # impact matrix of the first draw
+#' summary(attr(acc, "n_tries"))         # rotations screened per acceptance;
+#'                                       # compare the max with max_tries
+#' attr(acc, "failed_draws")             # draws dropped after max_tries
+#'
+#' # Partial identification: two shocks, the third column is left free
+#' S2  <- S[1:2, ]
+#' acc2 <- sign_restrict(mcmc, S2, max_tries = 500L, verbose = FALSE)
 #' @export
 sign_restrict <- function(mcmc, S, n_id = nrow(S), max_tries = 10000, verbose = TRUE){
 

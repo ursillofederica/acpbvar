@@ -79,6 +79,15 @@ log_mlik_asym <- function(y_list, X_list, p, s2, kappa1, kappa2,
 #' @return A list with `kappa1`, `kappa2`, the optimised `log_ml`, and the
 #'   `convergence` code returned by [stats::optim()].
 #'
+#' @examples
+#' sim <- simulate_var_example(T = 120, seed = 1)
+#' dat <- build_yX(sim$Y, p = 1L)
+#' s2  <- build_s2(dat$y_list)$s2
+#'
+#' opt <- optim_hyper(dat$y_list, dat$X_list, p = 1L, s2 = s2)
+#' opt$kappa1                  # own-lag tightness (larger = looser)
+#' opt$kappa2                  # cross-lag tightness, usually much smaller
+#' opt$convergence             # 0 means the optimiser converged
 #' @export
 optim_hyper <- function(y_list, X_list, p, s2,
                         kappa3 = 100, unit_root_mean = FALSE,

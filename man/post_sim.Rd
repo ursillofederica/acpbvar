@@ -45,3 +45,12 @@ regressors, fits univariate AR variance estimates, optimises the Minnesota
 tightness via Empirical Bayes, constructs the asymmetric prior, and runs
 draws \code{R} independent posterior samples, equation by equation.
 }
+\examples{
+sim  <- simulate_var_example(T = 120, seed = 1)
+mcmc <- post_sim(sim$Y, p = 1L, R = 200L)
+
+mcmc$spec$kappa             # tightness chosen by Empirical Bayes
+mcmc$spec$convergence       # 0 = optimiser converged
+dim(mcmc$samples$sigma2)    # R draws x n equations
+length(mcmc$samples$theta)  # R draws, each a list of n coefficient vectors
+}
