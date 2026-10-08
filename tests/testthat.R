@@ -1,4 +1,4 @@
 library(testthat)
-library(samplerChan)
+library(acpbvar)
 
-test_check("samplerChan")
+test_check("acpbvar")

@@ -1,11 +1,11 @@
-# samplerChan
+# acpbvar
 
 Bayesian estimation of asymmetric structural VARs in A-form, with
 Empirical-Bayes hyperparameter selection and sign-restriction identification.
 
 ## Overview
 
-`samplerChan` implements the asymmetric A-form representation of structural
+`acpbvar` implements the asymmetric A-form representation of structural
 Vector Autoregressions following Chan (2022). The package combines
 
 - an asymmetric Minnesota prior, with own-lag, cross-lag, and intercept
@@ -25,13 +25,13 @@ The package has no external dependencies beyond base R.
 
 ```r
 # install.packages("devtools")
-devtools::install_github("ursillofederica/samplerChan", build_vignettes = TRUE)
+devtools::install_github("ursillofederica/acpbvar", build_vignettes = TRUE)
 ```
 
 ## Quick start
 
 ```r
-library(samplerChan)
+library(acpbvar)
 
 # Simulate a small structural VAR with known sign pattern
 sim <- simulate_var_example(T = 200, seed = 42)
@@ -56,7 +56,7 @@ plot_irfs(irfs,
           shock_names = sim$shock_names)
 ```
 
-The vignette `samplerChan_workflow` documents the full workflow, including
+The vignette `acpbvar_workflow` documents the full workflow, including
 diagnostics and recovery of the true structural impact from the simulated
 data-generating process.
 

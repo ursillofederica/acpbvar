@@ -1,4 +1,4 @@
-Package: samplerChan
+Package: acpbvar
 Type: Package
 Title: Bayesian Structural VARs with Asymmetric Conjugate Priors
 Version: 0.1.0
@@ -34,5 +34,5 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-URL: https://github.com/ursillofederica/samplerChan
-BugReports: https://github.com/ursillofederica/samplerChan/issues
+URL: https://github.com/ursillofederica/acpbvar
+BugReports: https://github.com/ursillofederica/acpbvar/issues

@@ -9,8 +9,8 @@ test_that("check_sign reads restrictions on every variable under partial identif
                     demand = c(1,  1, -1))          # 2 shocks, 3 variables
     impact_ok  <- matrix(c(1, -1, -1,   1, 1, -1,   0, 0, 0), 3, 3)
     impact_bad <- matrix(c(1, -1,  5,   1, 1,  5,   0, 0, 0), 3, 3)  # violates variable 3
-    expect_true(samplerChan:::check_sign(impact_ok,  S_part, n_id = 2))
-    expect_false(samplerChan:::check_sign(impact_bad, S_part, n_id = 2))
+    expect_true(acpbvar:::check_sign(impact_ok,  S_part, n_id = 2))
+    expect_false(acpbvar:::check_sign(impact_bad, S_part, n_id = 2))
 })
 
 test_that("sign_restrict defaults n_id to the number of rows of S and runs under partial identification", {
@@ -33,5 +33,5 @@ test_that("full identification (square S) behaves as before", {
     S <- rbind(supply = c(1, -1, 0), demand = c(1, 1, 0), monetary = c(-1, -1, 1))
     acc <- sign_restrict(mcmc, S, n_id = 3L, max_tries = 500L, verbose = FALSE)
     expect_gt(length(acc), 0)
-    expect_true(all(sapply(acc, function(a) samplerChan:::check_sign(a$impact, S, 3L))))
+    expect_true(all(sapply(acc, function(a) acpbvar:::check_sign(a$impact, S, 3L))))
 })

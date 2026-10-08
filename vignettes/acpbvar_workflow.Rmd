@@ -1,8 +1,8 @@
 ---
-title: "samplerChan: a complete workflow"
+title: "acpbvar: a complete workflow"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{samplerChan: a complete workflow}
+  %\VignetteIndexEntry{acpbvar: a complete workflow}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -19,10 +19,10 @@ options(mcmc.pb = FALSE)
 ```
 
 ```{r}
-library(samplerChan)
+library(acpbvar)
 ```
 
-This vignette walks through the full estimation pipeline of `samplerChan`
+This vignette walks through the full estimation pipeline of `acpbvar`
 on a small simulated VAR for which the data-generating process is known.
 The objective is twofold: to illustrate the public interface end to end,
 and to verify that the package recovers a known structural impact matrix
