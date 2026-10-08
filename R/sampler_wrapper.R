@@ -14,7 +14,9 @@
 #'   at one. Default `FALSE`.
 #' @param var_names Optional character vector of variable names of length
 #'   `n`. Stored in the returned spec.
-#' @param seed Integer seed for reproducibility. Default `123456`.
+#' @param seed Optional integer seed passed to [set.seed()] before drawing.
+#'   Default `NULL`: the random number generator is left untouched, so set the
+#'   seed yourself before the call if you need reproducibility.
 #'
 #' @return A list with `samples` (the posterior draws of `theta` and
 #'   `sigma2`), `spec` (sampler configuration, optimised tightness, log
@@ -33,7 +35,7 @@
 #' @export
 post_sim <- function(Y, p, R,
                      kappa3 = 100, unit_root_mean = FALSE,
-                     var_names = NULL, seed = 123456) {
+                     var_names = NULL, seed = NULL) {
 
     check_Y(Y, fun = "post_sim")
     check_count(p, "p", min = 1L, max = nrow(Y) - 1L)
@@ -44,7 +46,10 @@ post_sim <- function(Y, p, R,
              length(var_names), ".", call. = FALSE)
 
     n     <- ncol(Y)
-    set.seed(seed)
+    if (!is.null(seed)) {
+        check_count(seed, "seed", min = -.Machine$integer.max, max = .Machine$integer.max)
+        set.seed(seed)
+    }
 
     dat   <- build_yX(Y, p)
     s2out <- build_s2(dat$y_list)

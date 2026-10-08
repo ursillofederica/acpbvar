@@ -4,13 +4,14 @@
 \alias{simulate_var_example}
 \title{Simulate a small structural VAR with known sign restrictions}
 \usage{
-simulate_var_example(T = 200, seed = 12345)
+simulate_var_example(T = 200, seed = NULL)
 }
 \arguments{
 \item{T}{Integer; number of post-burn-in observations to return.
 Default \code{200}.}
 
-\item{seed}{Integer seed for reproducibility. Default \code{12345}.}
+\item{seed}{Optional integer seed passed to \code{\link[=set.seed]{set.seed()}}. Default \code{NULL}
+(generator left untouched).}
 }
 \value{
 A list with the following elements:

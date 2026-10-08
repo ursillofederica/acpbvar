@@ -14,7 +14,8 @@
 #'
 #' @param T Integer; number of post-burn-in observations to return.
 #'   Default `200`.
-#' @param seed Integer seed for reproducibility. Default `12345`.
+#' @param seed Optional integer seed passed to [set.seed()]. Default `NULL`
+#'   (generator left untouched).
 #'
 #' @return A list with the following elements:
 #'   \describe{
@@ -36,10 +37,10 @@
 #' sim$impact_true
 #'
 #' @export
-simulate_var_example <- function(T = 200, seed = 12345) {
+simulate_var_example <- function(T = 200, seed = NULL) {
     check_count(T, "T", min = 10L)
 
-    set.seed(seed)
+    if (!is.null(seed)) set.seed(seed)
     n <- 3
 
     # True structural impact matrix (rows = variables, cols = shocks)

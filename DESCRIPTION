@@ -8,13 +8,15 @@ Authors@R:
            role = c("aut", "cre"),
            email = "federica.ursillo@studenti.unipd.it")
 Description: Implements Bayesian estimation of structural Vector Autoregressions
-    in the asymmetric A-form of Chan (2022), with an asymmetric Minnesota prior
+    in the asymmetric A-form of Chan (2022) <doi:10.3982/QE1381>, with an
+    asymmetric Minnesota prior
     whose own-lag, cross-lag, and intercept hyperparameters are optimised by
     Empirical Bayes via the closed-form marginal likelihood. Exact
     equation-by-equation posterior simulation in the structural form
     (independent Normal-Inverse-Gamma draws) provides posterior draws of
     the reduced-form parameters; structural identification through sign
-    restrictions follows the algorithm of Rubio-Ramirez, Waggoner and Zha (2010).
+    restrictions follows the algorithm of Rubio-Ramirez, Waggoner and Zha (2010)
+    <doi:10.1111/j.1467-937X.2009.00578.x>.
     Impulse responses, posterior bands, and acceptance diagnostics are computed
     from the accepted draws.
 License: MIT + file LICENSE
