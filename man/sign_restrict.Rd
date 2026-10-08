@@ -14,15 +14,22 @@ sign_restrict(mcmc, S, n_id = nrow(S), max_tries = 10000, verbose = TRUE)
 \item{n_id}{Number of identified shocks (defaults to \code{nrow(S)}).}
 
 \item{max_tries}{Maximum number of \code{Q} candidates per posterior draw before
-moving on. Default \code{10000}.}
+moving on. Default \code{10000}. Draws for which no rotation
+is found are dropped from the output and listed in the \code{failed_draws}
+attribute. This is the intended behaviour when the identified set of a
+draw is empty, but it also removes draws whose identified set is small
+relative to \code{max_tries}. Check that \code{max(attr(x, "n_tries"))} is well
+below \code{max_tries}: if it is close to it, the limit is binding and
+\code{max_tries} should be increased.}
 
 \item{verbose}{Logical; print a progress bar and acceptance summary.}
 }
 \value{
 A list of length equal to the number of accepted draws; each entry
-contains \code{draw_id}, \code{impact}, \code{Q}, \code{B_rf}, \code{Sigma_rf}. The vector of
-\code{Q}-candidate counts required for each acceptance is attached as
-\code{attr(., "n_tries")}.
+contains \code{draw_id}, \code{impact}, \code{Q}, \code{B_rf}, \code{Sigma_rf}.
+The result carries two attributes: \code{"n_tries"}, the number of \code{Q}
+candidates needed for each accepted draw, and \code{"failed_draws"}, the
+indices of the posterior draws dropped after \code{max_tries}.
 }
 \description{
 Implements the Rubio-Ramirez, Waggoner and Zha (2010, Theorem 9)
