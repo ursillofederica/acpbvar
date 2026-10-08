@@ -11,8 +11,8 @@ Vector Autoregressions following Chan (2022). The package combines
 - an asymmetric Minnesota prior, with own-lag, cross-lag, and intercept
   tightness selected by Empirical Bayes through the closed-form log marginal
   likelihood;
-- equation-by-equation conjugate Gibbs sampling in the structural form, with
-  Normal-Inverse-Gamma updates;
+- exact equation-by-equation posterior simulation in the structural form,
+  with independent Normal-Inverse-Gamma draws;
 - analytical recovery of the reduced-form quantities (impact matrix, lag
   coefficients, innovation covariance) from each posterior draw;
 - structural identification via sign restrictions, following the rotation

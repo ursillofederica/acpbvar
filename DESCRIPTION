@@ -1,6 +1,6 @@
 Package: samplerChan
 Type: Package
-Title: Bayesian Estimation of Asymmetric Structural VARs in A-Form
+Title: Bayesian Structural VARs with Asymmetric Conjugate Priors
 Version: 0.1.0
 Authors@R:
     person(given = "Federica",
@@ -10,15 +10,15 @@ Authors@R:
 Description: Implements Bayesian estimation of structural Vector Autoregressions
     in the asymmetric A-form of Chan (2022), with an asymmetric Minnesota prior
     whose own-lag, cross-lag, and intercept hyperparameters are optimised by
-    Empirical Bayes via the closed-form marginal likelihood. Equation-by-equation
-    conjugate Gibbs sampling in the structural form provides posterior draws of
+    Empirical Bayes via the closed-form marginal likelihood. Exact
+    equation-by-equation posterior simulation in the structural form
+    (independent Normal-Inverse-Gamma draws) provides posterior draws of
     the reduced-form parameters; structural identification through sign
     restrictions follows the algorithm of Rubio-Ramirez, Waggoner and Zha (2010).
     Impulse responses, posterior bands, and acceptance diagnostics are computed
     from the accepted draws.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Depends:

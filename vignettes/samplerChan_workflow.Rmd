@@ -104,8 +104,9 @@ opt$convergence
 
 `post_sim()` wraps the full pipeline: it prepares the data, fits the AR
 variances, runs Empirical Bayes for the tightness, builds the asymmetric
-prior, and draws posterior values of the structural coefficients and
-variances by conjugate Gibbs, equation by equation, for `R` iterations.
+prior, and draws `R` independent posterior values of the structural
+coefficients and variances, equation by equation (exact Normal-Inverse-Gamma
+draws, no Markov chain).
 
 ```{r}
 set.seed(20260514)

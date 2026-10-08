@@ -2,7 +2,7 @@
 % Please edit documentation in R/sampler_steps.R
 \name{draw}
 \alias{draw}
-\title{Single-equation conjugate Gibbs draw}
+\title{Single-equation Normal-Inverse-Gamma posterior draw}
 \usage{
 draw(y, X, nu, m, V, S)
 }

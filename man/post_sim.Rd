@@ -43,5 +43,5 @@ for the hyperparameter search, residual variances, variable names), and \code{da
 End-to-end wrapper: prepares the equation-by-equation responses and
 regressors, fits univariate AR variance estimates, optimises the Minnesota
 tightness via Empirical Bayes, constructs the asymmetric prior, and runs
-the conjugate Gibbs sampler equation by equation for \code{R} iterations.
+draws \code{R} independent posterior samples, equation by equation.
 }

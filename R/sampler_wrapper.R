@@ -3,7 +3,7 @@
 #' End-to-end wrapper: prepares the equation-by-equation responses and
 #' regressors, fits univariate AR variance estimates, optimises the Minnesota
 #' tightness via Empirical Bayes, constructs the asymmetric prior, and runs
-#' the conjugate Gibbs sampler equation by equation for `R` iterations.
+#' draws `R` independent posterior samples, equation by equation.
 #'
 #' @param Y A `T x n` numeric matrix of observations on the endogenous
 #'   variables.

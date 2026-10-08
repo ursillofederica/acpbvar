@@ -2,7 +2,7 @@
 % Please edit documentation in R/sampler_steps.R
 \name{draw_all}
 \alias{draw_all}
-\title{Equation-by-equation conjugate Gibbs sweep}
+\title{Equation-by-equation posterior draw}
 \usage{
 draw_all(y_list, X_list, nu, m_list, V_list, S)
 }
