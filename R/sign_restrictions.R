@@ -61,6 +61,13 @@ check_sign <- function(impact, S, n_id, tol = 1e-12) {
 #' @export
 sign_restrict <- function(mcmc, S, n_id = nrow(S), max_tries = 10000, verbose = TRUE){
 
+    check_mcmc(mcmc)
+    check_S(S, mcmc$spec$n)
+    check_count(n_id, "n_id", min = 1L, max = nrow(S))
+    check_count(max_tries, "max_tries", min = 1L)
+    if (!is.logical(verbose) || length(verbose) != 1 || is.na(verbose))
+        stop("`verbose` must be TRUE or FALSE.", call. = FALSE)
+
     R_tot <- mcmc$spec$R
     n     <- mcmc$spec$n
     p     <- mcmc$spec$p

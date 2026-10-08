@@ -41,6 +41,12 @@ build_companion <- function(B_rf, n, p) {
 #'
 #' @export
 compute_irf <- function(impact, B_rf, n, p, H) {
+    if (!is.matrix(impact) || !all(dim(impact) == c(n, n)))
+        stop("`impact` must be an n x n matrix with n = ", n, ".", call. = FALSE)
+    if (!is.matrix(B_rf) || nrow(B_rf) != n || ncol(B_rf) != 1 + n * p)
+        stop("`B_rf` must be an n x (1 + n * p) matrix (intercept first); got ",
+             nrow(B_rf), " x ", ncol(B_rf), ".", call. = FALSE)
+    check_count(H, "H", min = 0L)
     # impact: n x n (columns = shocks)
     # Returns: array n x (H+1) x n  [variable, horizon, shock]
 
@@ -78,6 +84,17 @@ compute_irf <- function(impact, B_rf, n, p, H) {
 #'
 #' @export
 collect_irfs <- function(accepted, n, p, H) {
+
+    check_accepted(accepted)
+    check_count(n, "n", min = 1L)
+    check_count(p, "p", min = 1L)
+    check_count(H, "H", min = 0L)
+    if (!all(dim(accepted[[1]]$impact) == c(n, n)))
+        stop("`n` = ", n, " does not match the ", nrow(accepted[[1]]$impact),
+             " x ", ncol(accepted[[1]]$impact), " impact matrices in `accepted`.", call. = FALSE)
+    if (ncol(accepted[[1]]$B_rf) != 1 + n * p)
+        stop("`p` = ", p, " does not match the lag structure in `accepted` (B_rf has ",
+             ncol(accepted[[1]]$B_rf), " columns, expected 1 + n * p = ", 1 + n * p, ").", call. = FALSE)
     # Returns: array n x (H+1) x n x n_accepted
 
     n_acc <- length(accepted)

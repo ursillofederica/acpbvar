@@ -27,6 +27,16 @@ plot_irfs <- function(irfs, var_names = NULL, shock_names = NULL,
                       col_band = "steelblue", alpha_band = 0.3,
                       ylab = "", main_cex = 0.9) {
 
+    if (!is.array(irfs) || length(dim(irfs)) != 4)
+        stop("`irfs` must be the 4-dimensional array returned by collect_irfs() ",
+             "(variable x horizon x shock x draw).", call. = FALSE)
+    if (length(probs) != 2 || !is.numeric(probs) || any(probs < 0 | probs > 1) || probs[1] >= probs[2])
+        stop("`probs` must be two increasing values in [0, 1], e.g. c(0.16, 0.84).", call. = FALSE)
+    if (!is.null(var_names) && length(var_names) != dim(irfs)[1])
+        stop("`var_names` must have length ", dim(irfs)[1], ".", call. = FALSE)
+    if (!is.null(shock_names) && length(shock_names) != dim(irfs)[3])
+        stop("`shock_names` must have length ", dim(irfs)[3], ".", call. = FALSE)
+
     n     <- dim(irfs)[1]
     H1    <- dim(irfs)[2]       # H + 1
     n_sh  <- dim(irfs)[3]

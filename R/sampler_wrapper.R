@@ -27,6 +27,14 @@ post_sim <- function(Y, p, R,
                      kappa3 = 100, unit_root_mean = FALSE,
                      var_names = NULL, seed = 123456) {
 
+    check_Y(Y, fun = "post_sim")
+    check_count(p, "p", min = 1L, max = nrow(Y) - 1L)
+    check_count(R, "R", min = 1L)
+    check_positive(kappa3, "kappa3")
+    if (!is.null(var_names) && length(var_names) != ncol(Y))
+        stop("`var_names` must have one name per column of `Y` (", ncol(Y), "); got ",
+             length(var_names), ".", call. = FALSE)
+
     n     <- ncol(Y)
     set.seed(seed)
 

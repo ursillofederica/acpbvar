@@ -37,6 +37,7 @@
 #'
 #' @export
 simulate_var_example <- function(T = 200, seed = 12345) {
+    check_count(T, "T", min = 10L)
 
     set.seed(seed)
     n <- 3
