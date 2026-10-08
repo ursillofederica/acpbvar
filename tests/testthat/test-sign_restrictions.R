@@ -15,7 +15,7 @@ test_that("check_sign reads restrictions on every variable under partial identif
 
 test_that("sign_restrict defaults n_id to the number of rows of S and runs under partial identification", {
     sim  <- simulate_var_example(T = 120, seed = 1)
-    mcmc <- post_sim(sim$Y, p = 1L, R = 20L)
+    mcmc <- post_sim(sim$Y, p = 1L, R = 20L, seed = 1)
     S_part <- rbind(supply = c(1, -1, 0),
                     demand = c(1,  1, 0))
     acc <- sign_restrict(mcmc, S_part, max_tries = 500L, verbose = FALSE)
@@ -29,7 +29,7 @@ test_that("sign_restrict defaults n_id to the number of rows of S and runs under
 
 test_that("full identification (square S) behaves as before", {
     sim  <- simulate_var_example(T = 120, seed = 2)
-    mcmc <- post_sim(sim$Y, p = 1L, R = 20L)
+    mcmc <- post_sim(sim$Y, p = 1L, R = 20L, seed = 2)
     S <- rbind(supply = c(1, -1, 0), demand = c(1, 1, 0), monetary = c(-1, -1, 1))
     acc <- sign_restrict(mcmc, S, n_id = 3L, max_tries = 500L, verbose = FALSE)
     expect_gt(length(acc), 0)
