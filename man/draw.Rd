@@ -4,30 +4,19 @@
 \alias{draw}
 \title{Single-equation Normal-Inverse-Gamma posterior draw}
 \usage{
-draw(y, X, nu, m, V, S)
+draw(post)
 }
 \arguments{
-\item{y}{Response vector for the equation.}
-
-\item{X}{Regressor matrix for the equation.}
-
-\item{nu}{Shape hyperparameter of the prior on \code{sigma^2}.}
-
-\item{m}{Prior mean of the structural coefficient vector.}
-
-\item{V}{Diagonal of the prior covariance of the structural coefficient
-vector (passed as a numeric vector of prior variances).}
-
-\item{S}{Scale hyperparameter of the prior on \code{sigma^2}.}
+\item{post}{The list returned by \code{\link[=posterior_eq]{posterior_eq()}} for the equation.}
 }
 \value{
-A list with \code{sigma2}, \code{theta} (the draw), and the posterior
-summaries \code{theta_hat}, \code{S_post}, \code{nu_post}.
+A list with \code{sigma2} and \code{theta}.
 }
 \description{
-Draws posterior values for the structural variance and coefficient vector
-of a single equation in the A-form representation, exploiting Normal-
-Inverse-Gamma conjugacy. The draw uses the Cholesky factor of the posterior
-precision to avoid explicit inversion and to deliver an exact joint draw.
+Draws one value of the structural variance and of the coefficient vector
+of a single equation from their joint Normal-Inverse-Gamma posterior,
+using the quantities precomputed by \code{\link[=posterior_eq]{posterior_eq()}}: \code{sigma^2} from its
+marginal inverse-gamma posterior, then \code{theta | sigma^2} from the
+conditional normal through the stored Cholesky factor (no inversion).
 }
 \keyword{internal}

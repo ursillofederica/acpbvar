@@ -64,6 +64,11 @@ post_sim <- function(Y, p, R,
                               opt$kappa1, opt$kappa2, kappa3, unit_root_mean)
 
 
+    # Posterior quantities do not depend on the draw: computed once per equation
+    post_list <- lapply(seq_len(n), function(i)
+        posterior_eq(dat$y_list[[i]], dat$X_list[[i]],
+                     prior$nu[i], prior$m[[i]], prior$V[[i]], prior$S[i]))
+
     samples <- list(
         theta  = vector("list", R),
         sigma2 = matrix(NA, R, n)
@@ -77,8 +82,7 @@ post_sim <- function(Y, p, R,
 
     for (i in seq_len(R)) {
 
-        post <- draw_all(dat$y_list, dat$X_list,
-                         prior$nu, prior$m, prior$V, prior$S)
+        post <- draw_all(post_list)
 
         samples$theta[[i]]  <- post$theta
         samples$sigma2[i, ] <- post$sigma2

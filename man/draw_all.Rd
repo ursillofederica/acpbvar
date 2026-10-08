@@ -4,17 +4,15 @@
 \alias{draw_all}
 \title{Equation-by-equation posterior draw}
 \usage{
-draw_all(y_list, X_list, nu, m_list, V_list, S)
+draw_all(post_list)
 }
 \arguments{
-\item{y_list, X_list}{Per-equation responses and regressors.}
-
-\item{nu, m_list, V_list, S}{Prior components produced by
-\code{\link[=build_prior_asym]{build_prior_asym()}}.}
+\item{post_list}{List with one element per equation, each produced by
+\code{\link[=posterior_eq]{posterior_eq()}}.}
 }
 \value{
-A list with vectors and lists of length \code{n}: \code{sigma2}, \code{theta},
-\code{theta_hat}, \code{S_post}, \code{nu_post}.
+A list with \code{sigma2} (numeric vector of length \code{n}) and \code{theta}
+(list of length \code{n} of coefficient vectors).
 }
 \description{
 Loops \code{\link[=draw]{draw()}} across all equations and collects the per-equation posterior

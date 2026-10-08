@@ -24,3 +24,7 @@ Fixes relative to the development version of May 2026:
 * Added testthat regression tests and a DGP recovery test.
 * All exported functions validate their arguments and stop with an
   informative message (`R/validate.R`).
+* Posterior quantities (Cholesky factor of the precision, posterior mean,
+  inverse-gamma parameters) are computed once per equation; each draw is then
+  one `rgamma()` and one triangular solve. Same draws for the same seed,
+  roughly 200x faster for 50 variables and 4 lags.
