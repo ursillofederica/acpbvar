@@ -4,14 +4,14 @@
 \alias{sign_restrict}
 \title{Structural identification via sign restrictions (RRWZ algorithm)}
 \usage{
-sign_restrict(mcmc, S, n_id = ncol(S), max_tries = 10000, verbose = TRUE)
+sign_restrict(mcmc, S, n_id = nrow(S), max_tries = 10000, verbose = TRUE)
 }
 \arguments{
 \item{mcmc}{A posterior object produced by \code{\link[=post_sim]{post_sim()}}.}
 
 \item{S}{An \verb{n_id x n_var} matrix of sign restrictions.}
 
-\item{n_id}{Number of identified shocks (defaults to \code{ncol(S)}).}
+\item{n_id}{Number of identified shocks (defaults to \code{nrow(S)}).}
 
 \item{max_tries}{Maximum number of \code{Q} candidates per posterior draw before
 moving on. Default \code{10000}.}

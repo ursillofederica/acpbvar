@@ -30,7 +30,9 @@ Imports:
     grDevices
 Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://github.com/ursillofederica/samplerChan
 BugReports: https://github.com/ursillofederica/samplerChan/issues

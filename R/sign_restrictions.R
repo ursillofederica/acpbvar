@@ -7,7 +7,7 @@
 #'
 #' @param impact The candidate `n_var x n_shock` impact matrix.
 #' @param S An `n_id x n_var` matrix of sign restrictions.
-#' @param n_id Integer; number of identified shocks (defaults to `ncol(S)`).
+#' @param n_id Integer; number of identified shocks (defaults to `nrow(S)`).
 #' @param tol Numeric tolerance below which violations are ignored.
 #'
 #' @return `TRUE` if the candidate satisfies the restrictions, otherwise
@@ -20,7 +20,7 @@ check_sign <- function(impact, S, n_id, tol = 1e-12) {
     # S[k, j] = required sign for variable j under shock k
     # impact[j, k] = response of variable j to shock k
     for (k in seq_len(n_id)) {
-        for (j in seq_len(nrow(S))) {
+        for (j in seq_len(ncol(S))) {
             if (S[k, j] ==  1 && impact[j, k] < -tol) return(FALSE)
             if (S[k, j] == -1 && impact[j, k] >  tol) return(FALSE)
         }
@@ -41,7 +41,7 @@ check_sign <- function(impact, S, n_id, tol = 1e-12) {
 #'
 #' @param mcmc A posterior object produced by [post_sim()].
 #' @param S An `n_id x n_var` matrix of sign restrictions.
-#' @param n_id Number of identified shocks (defaults to `ncol(S)`).
+#' @param n_id Number of identified shocks (defaults to `nrow(S)`).
 #' @param max_tries Maximum number of `Q` candidates per posterior draw before
 #'   moving on. Default `10000`.
 #' @param verbose Logical; print a progress bar and acceptance summary.
@@ -52,7 +52,7 @@ check_sign <- function(impact, S, n_id, tol = 1e-12) {
 #'   `attr(., "n_tries")`.
 #'
 #' @export
-sign_restrict <- function(mcmc, S, n_id = ncol(S), max_tries = 10000, verbose = TRUE){
+sign_restrict <- function(mcmc, S, n_id = nrow(S), max_tries = 10000, verbose = TRUE){
 
     R_tot <- mcmc$spec$R
     n     <- mcmc$spec$n
