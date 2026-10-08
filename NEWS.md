@@ -22,3 +22,5 @@ Fixes relative to the development version of May 2026:
   `post_sim()` stores the optimiser convergence code in `spec$convergence`
   and warns on non-convergence.
 * Added testthat regression tests and a DGP recovery test.
+* All exported functions validate their arguments and stop with an
+  informative message (`R/validate.R`).

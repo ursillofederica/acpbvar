@@ -84,6 +84,14 @@ optim_hyper <- function(y_list, X_list, p, s2,
                         kappa3 = 100, unit_root_mean = FALSE,
                         init = c(0.04, 0.004)) {
 
+    check_lists(y_list, X_list, p)
+    if (length(s2) != length(y_list) || !is.numeric(s2) || any(!is.finite(s2)) || any(s2 <= 0))
+        stop("`s2` must be a vector of positive residual variances, one per equation ",
+             "(", length(y_list), "), as returned by build_s2()$s2.", call. = FALSE)
+    check_positive(kappa3, "kappa3")
+    if (length(init) != 2 || !is.numeric(init) || any(init <= 0))
+        stop("`init` must be two positive starting values c(kappa1, kappa2).", call. = FALSE)
+
     neg_log_ml <- function(log_kappa) {
         k1 <- exp(log_kappa[1])
         k2 <- exp(log_kappa[2])

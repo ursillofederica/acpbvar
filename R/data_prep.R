@@ -26,6 +26,9 @@
 #' @export
 build_yX <- function(Y, p) {
 
+    check_Y(Y, min_cols = 1L, fun = "build_yX")
+    check_count(p, "p", min = 1L, max = nrow(Y) - 1L)
+
     T_full <- nrow(Y)
     n      <- ncol(Y)
     TT     <- T_full - p
@@ -84,6 +87,9 @@ build_yX <- function(Y, p) {
 #'
 #' @export
 build_s2 <- function(y_list, ar.lags = 4) {
+    if (!is.list(y_list) || length(y_list) < 1 || !all(vapply(y_list, is.numeric, logical(1))))
+        stop("`y_list` must be a non-empty list of numeric vectors, as returned by build_yX().", call. = FALSE)
+    check_count(ar.lags, "ar.lags", min = 1L)
     n <- length(y_list); s2 <- numeric(n)
     for (i in seq_len(n)){
         y_i <- y_list[[i]]

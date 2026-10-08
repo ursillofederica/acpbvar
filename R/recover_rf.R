@@ -14,6 +14,11 @@
 #'
 #' @export
 recover_rf <- function(theta_draw, sigma2_draw) {
+    if (!is.list(theta_draw) || length(theta_draw) != length(sigma2_draw))
+        stop("`theta_draw` must be a list with one coefficient vector per equation and ",
+             "`sigma2_draw` a vector of the same length.", call. = FALSE)
+    if (!is.numeric(sigma2_draw) || any(sigma2_draw <= 0))
+        stop("`sigma2_draw` must contain positive variances.", call. = FALSE)
 
     n      <- length(theta_draw)
     k_beta <- length(theta_draw[[1]])
