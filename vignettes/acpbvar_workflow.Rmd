@@ -307,9 +307,8 @@ A lag order that is not an integer:
 post_sim(Y, p = 1.5, R = 100L)
 ```
 
-Sign restrictions with the wrong orientation (variables on the rows) in a
-model with a different number of variables, or with an entry outside
-`{-1, 0, 1}`:
+A sign-restriction matrix with the wrong number of columns (one column per
+variable is required), or with an entry outside `{-1, 0, 1}`:
 
 ```{r, error = TRUE}
 sign_restrict(mcmc, S[, 1:2])
@@ -320,7 +319,7 @@ S_bad <- S; S_bad[1, 1] <- 2
 sign_restrict(mcmc, S_bad)
 ```
 
-A horizon count that is inconsistent with the accepted draws:
+A number of variables `n` that does not match the accepted draws:
 
 ```{r, error = TRUE}
 collect_irfs(accepted, n = 2L, p = p, H = 12L)
