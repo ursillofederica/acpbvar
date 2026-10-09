@@ -56,25 +56,23 @@ compute_irf <- function(impact, B_rf, n, p, H) {
         stop("`B_rf` must be an n x (1 + n * p) matrix (intercept first); got ",
              nrow(B_rf), " x ", ncol(B_rf), ".", call. = FALSE)
     check_count(H, "H", min = 0L)
-    # impact: n x n (columns = shocks)
-    # Returns: array n x (H+1) x n  [variable, horizon, shock]
 
-    F_comp <- build_companion(B_rf, n, p)
-    np     <- n * p
-    J      <- matrix(0, np, n)
-    J[1:n, ] <- diag(n)
-
-    irf <- array(0, dim = c(n, H + 1, n))
-
-    F_power <- diag(np)
-    for (h in 0:H) {
-        Phi_h <- t(J) %*% F_power %*% J
-        for (k in seq_len(n)) {
-            irf[, h + 1, k] <- Phi_h %*% impact[, k]
+    # VMA recursion on the n x n lag matrices: Phi_0 = I,
+    # Phi_h = sum_{j=1}^{min(h,p)} Phi_{h-j} B_j. Same numbers as powering the
+    # companion matrix, at a fraction of the cost when n * p is large.
+    B   <- B_rf[, -1, drop = FALSE]
+    Phi <- vector("list", H + 1)
+    Phi[[1]] <- diag(n)
+    for (h in seq_len(H)) {
+        acc <- matrix(0, n, n)
+        for (j in seq_len(min(h, p))) {
+            acc <- acc + Phi[[h - j + 1]] %*% B[, ((j - 1) * n + 1):(j * n), drop = FALSE]
         }
-        F_power <- F_power %*% F_comp
+        Phi[[h + 1]] <- acc
     }
 
+    irf <- array(0, dim = c(n, H + 1, n))
+    for (h in 0:H) irf[, h + 1, ] <- Phi[[h + 1]] %*% impact
     irf
 }
 
