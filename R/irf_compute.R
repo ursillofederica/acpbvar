@@ -1,35 +1,8 @@
-#' Build the VAR companion-form matrix
-#'
-#' Constructs the `np x np` companion matrix from the reduced-form coefficient
-#' matrix, dropping the intercept column. Used internally by [compute_irf()].
-#'
-#' @param B_rf Reduced-form coefficient matrix as returned by [recover_rf()],
-#'   with the first column the intercept and the remaining `n * p` columns
-#'   the lag coefficients in vector form.
-#' @param n Number of endogenous variables.
-#' @param p VAR lag order.
-#'
-#' @return The `(n * p) x (n * p)` companion matrix.
-#'
-#' @keywords internal
-build_companion <- function(B_rf, n, p) {
-
-    B <- B_rf[, -1, drop = FALSE]
-    np <- n * p
-    F_comp <- matrix(0, np, np)
-    F_comp[1:n, ] <- B
-    if (p > 1) {
-        F_comp[(n + 1):np, 1:(np - n)] <- diag(n * (p - 1))
-    }
-    F_comp
-}
-
-
 #' Compute structural impulse responses for a single draw
 #'
-#' Iterates the companion form for `H + 1` periods to deliver the structural
-#' impulse responses for the given impact matrix and reduced-form coefficient
-#' matrix.
+#' Computes the structural impulse responses at horizons `0, ..., H` for the
+#' given impact matrix and reduced-form coefficient matrix, through the VMA
+#' recursion on the `n x n` lag matrices.
 #'
 #' @param impact The `n x n` impact matrix; columns index shocks.
 #' @param B_rf Reduced-form coefficient matrix as returned by [recover_rf()].

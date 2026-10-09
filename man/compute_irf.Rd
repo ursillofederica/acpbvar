@@ -20,9 +20,9 @@ A three-dimensional array of dimension \verb{n x (H + 1) x n}, indexed
 by \verb{[variable, horizon, shock]}.
 }
 \description{
-Iterates the companion form for \code{H + 1} periods to deliver the structural
-impulse responses for the given impact matrix and reduced-form coefficient
-matrix.
+Computes the structural impulse responses at horizons \verb{0, ..., H} for the
+given impact matrix and reduced-form coefficient matrix, through the VMA
+recursion on the \verb{n x n} lag matrices.
 }
 \examples{
 sim  <- simulate_var_example(T = 120, seed = 1)
