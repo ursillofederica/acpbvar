@@ -78,14 +78,14 @@ build_yX <- function(Y, p) {
 
 #' Estimate residual variances from univariate AR fits
 #'
-#' For each variable, fits an autoregression (with fallback to lower orders if
-#' the requested order fails) and extracts the residual variance. The resulting
-#' variances enter the asymmetric Minnesota prior as scaling factors.
+#' For each variable, fits an AR(`ar.lags`) with intercept by ordinary least
+#' squares and returns the mean of the squared residuals, as in the
+#' replication code of Chan (2022). The resulting variances enter the
+#' asymmetric Minnesota prior as scaling factors. Series too short for the
+#' fit (fewer than `ar.lags + 3` observations) get their sample variance.
 #'
 #' @param y_list A list of `n` response vectors, as produced by [build_yX()].
-#' @param ar.lags Integer; AR order attempted first. If the fit fails the
-#'   function falls back to orders `2` and then `1`; if all fail, the marginal
-#'   variance of the series is returned. Default is `4`.
+#' @param ar.lags Integer; order of the univariate autoregression. Default `4`.
 #'
 #' @return A list with elements:
 #'   \describe{
@@ -104,24 +104,22 @@ build_s2 <- function(y_list, ar.lags = 4) {
     if (!is.list(y_list) || length(y_list) < 1 || !all(vapply(y_list, is.numeric, logical(1))))
         stop("`y_list` must be a non-empty list of numeric vectors, as returned by build_yX().", call. = FALSE)
     check_count(ar.lags, "ar.lags", min = 1L)
-    n <- length(y_list); s2 <- numeric(n)
-    for (i in seq_len(n)){
+
+    n  <- length(y_list)
+    s2 <- numeric(n)
+    for (i in seq_len(n)) {
         y_i <- y_list[[i]]
-        fit <- NULL
-        for (lag in c(ar.lags, 2, 1)) {
-            fit <- tryCatch(
-                stats::arima(y_i, order = c(lag, 0, 0), method = "ML"),
-                error = function(e) NULL
-            )
-            if (!is.null(fit)) break
+        if (length(y_i) <= ar.lags + 2) {
+            s2[i] <- stats::var(y_i)        # too short for the AR fit: fall back to the sample variance
+            next
         }
-        if (!is.null(fit)) {
-            s2[i] <- stats::var(fit$residuals)
-        } else {
-            s2[i] <- stats::var(y_i)
-        }
+        # OLS AR(ar.lags) with intercept; s2 = mean of squared residuals,
+        # as in get_resid_var.m of Chan (2022)
+        E   <- stats::embed(y_i, ar.lags + 1)
+        fit <- stats::lm.fit(cbind(1, E[, -1, drop = FALSE]), E[, 1])
+        s2[i] <- mean(fit$residuals^2)
     }
-    S <- diag(s2)
+    S <- diag(s2, nrow = n)
 
     list(
         s2 = s2,

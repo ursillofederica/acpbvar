@@ -93,3 +93,27 @@ test_that("partial identification works with horizons > 0 and leaves the free co
         for (h in 0:2) expect_true(acpbvar:::check_sign(ir[, h + 1, ], S_part, 2L))
     }
 })
+
+# --- joint accept-reject (Chan 2022 replication code) ------------------------
+
+test_that("method = 'joint' draws one rotation per posterior draw and never warns", {
+    sim  <- simulate_var_example(T = 200, seed = 42)
+    mcmc <- post_sim(sim$Y, p = 1L, R = 200L, seed = 1)
+    S <- rbind(c(1, -1, 0), c(1, 1, 0), c(-1, -1, 1))
+    set.seed(1)
+    expect_silent(acc <- sign_restrict(mcmc, S, method = "joint", verbose = FALSE))
+    expect_equal(attr(acc, "method"), "joint")
+    expect_true(all(attr(acc, "n_tries") == 1L))
+    expect_equal(length(acc) + length(attr(acc, "failed_draws")), mcmc$spec$R)
+    expect_lt(length(acc), mcmc$spec$R)          # with three restricted shocks most single rotations fail
+    for (a in acc) expect_true(acpbvar:::check_sign(a$impact, S, 3L))
+})
+
+test_that("method is validated and per_draw is the default", {
+    sim  <- simulate_var_example(T = 120, seed = 1)
+    mcmc <- post_sim(sim$Y, p = 1L, R = 20L, seed = 1)
+    S <- rbind(c(1, -1, 0), c(1, 1, 0))
+    expect_error(sign_restrict(mcmc, S, method = "chan"), "should be one of")
+    acc <- sign_restrict(mcmc, S, max_tries = 500L, verbose = FALSE)
+    expect_equal(attr(acc, "method"), "per_draw")
+})

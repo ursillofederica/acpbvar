@@ -79,3 +79,14 @@ test_that("check_S accepts a matrix or a 3-d array and rejects the rest", {
     expect_error(sign_restrict(mcmc, S, horizons = -1), "`horizons`")
     expect_error(sign_restrict(mcmc, S, horizons = 1.5), "`horizons`")
 })
+
+test_that("build_s2 matches an OLS AR(4) fit with intercept (mean squared residuals)", {
+    sim <- simulate_var_example(T = 150, seed = 3)
+    dat <- build_yX(sim$Y, p = 1L)
+    s2  <- build_s2(dat$y_list)$s2
+    y   <- dat$y_list[[2]]
+    E   <- embed(y, 5)
+    r   <- residuals(lm(E[, 1] ~ E[, 2:5]))
+    expect_equal(s2[2], mean(r^2))
+    expect_equal(build_s2(list(c(1, 2, 3, 2)))$s2, var(c(1, 2, 3, 2)))   # too short: sample variance
+})

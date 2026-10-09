@@ -50,6 +50,18 @@ check_sign <- function(impact, S, n_id, tol = 1e-12) {
 #'   horizon. A matrix with `horizons = 0` restricts the impact only.
 #' @param n_id Number of identified shocks (defaults to `nrow(S)`). Columns of
 #'   the rotation beyond `n_id` are left unrestricted and unlabelled.
+#' @param method `"per_draw"` (default) or `"joint"`. With `"per_draw"`, up to
+#'   `max_tries` rotations are tried for each posterior draw and the draw is
+#'   kept with the first admissible one: the posterior of the reduced form is
+#'   left unchanged (draws whose identified set is empty are dropped), and the
+#'   rotation is uniform within the identified set of each draw. With
+#'   `"joint"`, a single rotation is drawn for each posterior draw and the draw
+#'   is discarded if it fails, as in the replication code of Chan (2022):
+#'   reduced-form draws are then reweighted by the size of their identified
+#'   set. Chan (2022, footnote 13) describes both implementations. Under
+#'   `"joint"` the number of accepted draws is random and typically much
+#'   smaller than `R`; `max_tries` is ignored. Other R packages (BVAR,
+#'   bsvarSIGNs) use the per-draw search.
 #' @param horizons Non-negative integer. Sign restrictions are imposed on the
 #'   impulse responses at horizons `0, 1, ..., horizons`; the default `0L`
 #'   restricts the impact matrix only. Responses at later horizons are
@@ -106,7 +118,10 @@ check_sign <- function(impact, S, n_id, tol = 1e-12) {
 #' accA <- sign_restrict(mcmc, A, horizons = 2L, max_tries = 2000L, verbose = FALSE)
 #' @export
 sign_restrict <- function(mcmc, S, n_id = nrow(S), horizons = 0L,
+                          method = c("per_draw", "joint"),
                           max_tries = 10000, verbose = TRUE){
+
+    method <- match.arg(method)
 
     check_mcmc(mcmc)
     check_count(horizons, "horizons", min = 0L)
@@ -115,6 +130,8 @@ sign_restrict <- function(mcmc, S, n_id = nrow(S), horizons = 0L,
     check_count(max_tries, "max_tries", min = 1L)
     if (!is.logical(verbose) || length(verbose) != 1 || is.na(verbose))
         stop("`verbose` must be TRUE or FALSE.", call. = FALSE)
+    # joint accept-reject (Chan 2022, replication code): one rotation per posterior draw
+    if (method == "joint") max_tries <- 1L
 
     R_tot <- mcmc$spec$R
     n     <- mcmc$spec$n
@@ -197,10 +214,15 @@ sign_restrict <- function(mcmc, S, n_id = nrow(S), horizons = 0L,
     }
 
     if (verbose) {
-        cat(sprintf("\nAccepted %d / %d draws (%.1f%%); %d draws dropped after %d tries\n",
-                    length(accepted), R_tot, 100 * length(accepted) / R_tot,
-                    length(failed), max_tries))
-        if (length(n_tries_v) > 0) {
+        if (method == "joint") {
+            cat(sprintf("\nJoint accept-reject: %d of %d posterior draws accepted (%.1f%%)\n",
+                        length(accepted), R_tot, 100 * length(accepted) / R_tot))
+        } else {
+            cat(sprintf("\nAccepted %d / %d draws (%.1f%%); %d draws dropped after %d tries\n",
+                        length(accepted), R_tot, 100 * length(accepted) / R_tot,
+                        length(failed), max_tries))
+        }
+        if (method == "per_draw" && length(n_tries_v) > 0) {
             cat(sprintf("Q draws per acceptance: mean=%.1f, median=%d, max=%d\n",
                         mean(n_tries_v), stats::median(n_tries_v), max(n_tries_v)))
             # Implied per-Q acceptance rate (accounting for sign flips)
@@ -212,7 +234,7 @@ sign_restrict <- function(mcmc, S, n_id = nrow(S), horizons = 0L,
 
     }
 
-    if (length(failed) > 0){
+    if (method == "per_draw" && length(failed) > 0){
         warning(sprintf(paste0("%d of %d posterior draws dropped: no rotation found within max_tries = %d. ",
                                "If max(attr(., 'n_tries')) is close to max_tries, increase it."),
                         length(failed), R_tot, max_tries), call. = FALSE)
@@ -220,5 +242,6 @@ sign_restrict <- function(mcmc, S, n_id = nrow(S), horizons = 0L,
 
     attr(accepted, "n_tries") <- n_tries_v
     attr(accepted, "failed_draws") <- failed
+    attr(accepted, "method") <- method
     accepted
 }

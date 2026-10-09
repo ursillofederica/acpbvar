@@ -1,5 +1,12 @@
 # acpbvar 0.1.0
 
+* `sign_restrict()` gains `method = c("per_draw", "joint")`: the joint
+  accept-reject of Chan's replication code (one rotation per posterior draw)
+  is available next to the default per-draw search.
+* `build_s2()` computes the AR(4) residual variances by OLS (mean of squared
+  residuals), as in Chan's `get_resid_var.m`, instead of `stats::arima()`.
+* `compute_irf()` uses the VMA recursion instead of companion-matrix powers
+  (identical output, much faster for large `n * p`).
 * `sign_restrict()` gains `horizons`: sign restrictions can be imposed on
   the impulse responses at horizons `0, ..., horizons`, with the same matrix
   at every horizon or a 3-d array with one sign matrix per horizon.

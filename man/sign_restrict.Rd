@@ -9,6 +9,7 @@ sign_restrict(
   S,
   n_id = nrow(S),
   horizons = 0L,
+  method = c("per_draw", "joint"),
   max_tries = 10000,
   verbose = TRUE
 )
@@ -34,6 +35,19 @@ restricts the impact matrix only. Responses at later horizons are
 computed with \code{\link[=compute_irf]{compute_irf()}} from the reduced form of each draw, so the
 cost per candidate rotation grows with \code{horizons}, and draws whose
 identified set is empty cost \code{max_tries} candidates each.}
+
+\item{method}{\code{"per_draw"} (default) or \code{"joint"}. With \code{"per_draw"}, up to
+\code{max_tries} rotations are tried for each posterior draw and the draw is
+kept with the first admissible one: the posterior of the reduced form is
+left unchanged (draws whose identified set is empty are dropped), and the
+rotation is uniform within the identified set of each draw. With
+\code{"joint"}, a single rotation is drawn for each posterior draw and the draw
+is discarded if it fails, as in the replication code of Chan (2022):
+reduced-form draws are then reweighted by the size of their identified
+set. Chan (2022, footnote 13) describes both implementations. Under
+\code{"joint"} the number of accepted draws is random and typically much
+smaller than \code{R}; \code{max_tries} is ignored. Other R packages (BVAR,
+bsvarSIGNs) use the per-draw search.}
 
 \item{max_tries}{Maximum number of \code{Q} candidates per posterior draw before
 moving on. Default \code{10000}. Draws for which no rotation

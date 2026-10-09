@@ -9,9 +9,7 @@ build_s2(y_list, ar.lags = 4)
 \arguments{
 \item{y_list}{A list of \code{n} response vectors, as produced by \code{\link[=build_yX]{build_yX()}}.}
 
-\item{ar.lags}{Integer; AR order attempted first. If the fit fails the
-function falls back to orders \code{2} and then \code{1}; if all fail, the marginal
-variance of the series is returned. Default is \code{4}.}
+\item{ar.lags}{Integer; order of the univariate autoregression. Default \code{4}.}
 }
 \value{
 A list with elements:
@@ -21,9 +19,11 @@ A list with elements:
 }
 }
 \description{
-For each variable, fits an autoregression (with fallback to lower orders if
-the requested order fails) and extracts the residual variance. The resulting
-variances enter the asymmetric Minnesota prior as scaling factors.
+For each variable, fits an AR(\code{ar.lags}) with intercept by ordinary least
+squares and returns the mean of the squared residuals, as in the
+replication code of Chan (2022). The resulting variances enter the
+asymmetric Minnesota prior as scaling factors. Series too short for the
+fit (fewer than \code{ar.lags + 3} observations) get their sample variance.
 }
 \examples{
 sim <- simulate_var_example(T = 120, seed = 1)
