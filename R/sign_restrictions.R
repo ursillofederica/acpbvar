@@ -40,8 +40,22 @@ check_sign <- function(impact, S, n_id, tol = 1e-12) {
 #' and the first accepted rotation is stored.
 #'
 #' @param mcmc A posterior object produced by [post_sim()].
-#' @param S An `n_id x n_var` matrix of sign restrictions.
-#' @param n_id Number of identified shocks (defaults to `nrow(S)`).
+#' @param S Sign restrictions, with entries `+1`, `-1` or `0` (unrestricted).
+#'   Either an `n_id x n_var` matrix (rows: identified shocks, columns:
+#'   variables), imposed on the impulse responses at every horizon
+#'   `0, ..., horizons`; or an `n_id x n_var x (horizons + 1)` array with one
+#'   matrix per horizon, so that different signs can be imposed at different
+#'   horizons (a slice of zeros leaves that horizon unrestricted). Every
+#'   identified shock must carry at least one non-zero restriction at some
+#'   horizon. A matrix with `horizons = 0` restricts the impact only.
+#' @param n_id Number of identified shocks (defaults to `nrow(S)`). Columns of
+#'   the rotation beyond `n_id` are left unrestricted and unlabelled.
+#' @param horizons Non-negative integer. Sign restrictions are imposed on the
+#'   impulse responses at horizons `0, 1, ..., horizons`; the default `0L`
+#'   restricts the impact matrix only. Responses at later horizons are
+#'   computed with [compute_irf()] from the reduced form of each draw, so the
+#'   cost per candidate rotation grows with `horizons`, and draws whose
+#'   identified set is empty cost `max_tries` candidates each.
 #' @param max_tries Maximum number of `Q` candidates per posterior draw before
 #'   moving on. Default `10000`. Draws for which no rotation
 #'   is found are dropped from the output and listed in the `failed_draws`
@@ -78,11 +92,25 @@ check_sign <- function(impact, S, n_id, tol = 1e-12) {
 #' # Partial identification: two shocks, the third column is left free
 #' S2  <- S[1:2, ]
 #' acc2 <- sign_restrict(mcmc, S2, max_tries = 500L, verbose = FALSE)
+#'
+#' # Same signs imposed on impact and on the next three horizons (as in
+#' # Uhlig 2005): more demanding, so more rotations are screened per draw
+#' acc3 <- sign_restrict(mcmc, S, horizons = 3L, max_tries = 2000L, verbose = FALSE)
+#' summary(attr(acc3, "n_tries"))
+#'
+#' # Different signs at different horizons: one matrix per horizon
+#' A <- array(0, c(3, 3, 3))
+#' A[, , 1] <- S            # impact: full pattern
+#' A[3, 3, 2] <- 1          # h = 1: interest rate still up after a monetary shock
+#' A[1, 1, 3] <- 1          # h = 2: output still up after a supply shock
+#' accA <- sign_restrict(mcmc, A, horizons = 2L, max_tries = 2000L, verbose = FALSE)
 #' @export
-sign_restrict <- function(mcmc, S, n_id = nrow(S), max_tries = 10000, verbose = TRUE){
+sign_restrict <- function(mcmc, S, n_id = nrow(S), horizons = 0L,
+                          max_tries = 10000, verbose = TRUE){
 
     check_mcmc(mcmc)
-    check_S(S, mcmc$spec$n)
+    check_count(horizons, "horizons", min = 0L)
+    S <- check_S(S, mcmc$spec$n, horizons)
     check_count(n_id, "n_id", min = 1L, max = nrow(S))
     check_count(max_tries, "max_tries", min = 1L)
     if (!is.logical(verbose) || length(verbose) != 1 || is.na(verbose))
@@ -98,6 +126,9 @@ sign_restrict <- function(mcmc, S, n_id = nrow(S), max_tries = 10000, verbose = 
         d[seq_len(n_id)] <- as.integer(n_flips[f, ])
         d
     })
+    # one sign matrix per horizon 0, ..., horizons (kept as matrices even if n_id = 1)
+    S_h <- lapply(seq_len(horizons + 1), function(h) matrix(S[, , h], nrow = n_id))
+
     accepted  <- list()
     n_tries_v <- integer(0) # Q draws needed per accepted draw
     failed    <- integer(0)
@@ -134,7 +165,19 @@ sign_restrict <- function(mcmc, S, n_id = nrow(S), max_tries = 10000, verbose = 
             # check all the 2^n sign flips
             for (f in seq_along(flip_list)) {
                 impact_f <- P %*% diag(flip_list[[f]])
-                if (check_sign(impact_f, S, n_id)) {
+
+                # impact first; responses at later horizons only if impact passes
+                ok <- check_sign(impact_f, S_h[[1]], n_id)
+                if (ok && horizons > 0L) {
+                    irf_f <- compute_irf(impact_f, B_rf, n, p, H = horizons)
+                    for (h in seq_len(horizons)) {
+                        if (!check_sign(irf_f[, h + 1, ], S_h[[h + 1]], n_id)) {
+                            ok <- FALSE
+                            break
+                        }
+                    }
+                }
+                if (ok) {
                     accepted[[length(accepted) + 1]] <- list(
                         draw_id  = s,
                         impact   = impact_f,

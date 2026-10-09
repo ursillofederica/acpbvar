@@ -62,3 +62,20 @@ test_that("recover_rf and simulate_var_example validate their inputs", {
     expect_error(recover_rf(list(1, 2), c(1, -1)), "positive variances")
     expect_error(simulate_var_example(T = 3), "`T`")
 })
+
+test_that("check_S accepts a matrix or a 3-d array and rejects the rest", {
+    S <- rbind(c(1, -1, 0), c(1, 1, 0))
+    a <- acpbvar:::check_S(S, 3, horizons = 2L)
+    expect_equal(dim(a), c(2, 3, 3))
+    expect_true(all(a[, , 2] == S))
+    A <- array(0, c(2, 3, 3)); A[1, 1, ] <- 1; A[2, 2, 2] <- -1
+    expect_equal(dim(acpbvar:::check_S(A, 3, horizons = 2L)), c(2, 3, 3))
+    expect_error(acpbvar:::check_S(A, 3, horizons = 1L), "slices")
+    A0 <- A; A0[2, , ] <- 0
+    expect_error(acpbvar:::check_S(A0, 3, horizons = 2L), "all zero")
+    expect_error(acpbvar:::check_S(1:3, 3), "3-d array")
+    sim  <- simulate_var_example(T = 80, seed = 7)
+    mcmc <- post_sim(sim$Y, p = 1L, R = 5L)
+    expect_error(sign_restrict(mcmc, S, horizons = -1), "`horizons`")
+    expect_error(sign_restrict(mcmc, S, horizons = 1.5), "`horizons`")
+})

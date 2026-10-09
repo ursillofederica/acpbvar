@@ -51,16 +51,26 @@ check_mcmc <- function(mcmc) {
     invisible(TRUE)
 }
 
-check_S <- function(S, n_var) {
-    if (!is.matrix(S) || !is.numeric(S) || anyNA(S) || !all(S %in% c(-1, 0, 1)))
-        stop("`S` must be a numeric matrix with entries in {-1, 0, 1}: one row per identified shock, ",
-             "one column per variable.", call. = FALSE)
+check_S <- function(S, n_var, horizons = 0L) {
+    if (!(is.array(S) && length(dim(S)) %in% c(2, 3)) || !is.numeric(S) ||
+        anyNA(S) || !all(S %in% c(-1, 0, 1)))
+        stop("`S` must be a numeric matrix (n_id x n_var) or a 3-d array ",
+             "(n_id x n_var x (horizons + 1)) with entries in {-1, 0, 1}.", call. = FALSE)
+
+    if (is.matrix(S)) {
+        S <- array(S, dim = c(nrow(S), ncol(S), horizons + 1))
+    } else if (dim(S)[3] != horizons + 1) {
+        stop("`S` has ", dim(S)[3], " slices along the third dimension but horizons = ",
+             horizons, " requires ", horizons + 1, " (one per horizon 0, ..., horizons).", call. = FALSE)
+    }
+
     if (ncol(S) != n_var)
         stop("`S` has ", ncol(S), " columns but the model has ", n_var, " variables.", call. = FALSE)
     if (any(rowSums(S != 0) == 0))
         stop("Every row of `S` must contain at least one non-zero restriction; row(s) ",
              paste(which(rowSums(S != 0) == 0), collapse = ", "), " are all zero.", call. = FALSE)
-    invisible(TRUE)
+
+    S
 }
 
 check_accepted <- function(accepted) {

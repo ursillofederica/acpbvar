@@ -35,3 +35,61 @@ test_that("full identification (square S) behaves as before", {
     expect_gt(length(acc), 0)
     expect_true(all(sapply(acc, function(a) acpbvar:::check_sign(a$impact, S, 3L))))
 })
+
+# --- restrictions beyond impact -------------------------------------------
+
+test_that("a matrix S with horizons > 0 is imposed at every horizon 0..horizons", {
+    sim  <- simulate_var_example(T = 200, seed = 42)
+    mcmc <- post_sim(sim$Y, p = 1L, R = 60L, seed = 1)
+    S <- rbind(supply = c(1, -1, 0), demand = c(1, 1, 0), monetary = c(-1, -1, 1))
+    set.seed(1)
+    acc <- sign_restrict(mcmc, S, horizons = 3L, max_tries = 5000L, verbose = FALSE)
+    expect_gt(length(acc), 0)
+    for (a in acc) {
+        ir <- compute_irf(a$impact, a$B_rf, n = 3L, p = 1L, H = 3L)
+        for (h in 0:3) expect_true(acpbvar:::check_sign(ir[, h + 1, ], S, 3L))
+    }
+})
+
+test_that("horizons > 0 is at least as demanding as impact only", {
+    sim  <- simulate_var_example(T = 200, seed = 42)
+    mcmc <- post_sim(sim$Y, p = 1L, R = 60L, seed = 1)
+    S <- rbind(c(1, -1, 0), c(1, 1, 0), c(-1, -1, 1))
+    set.seed(1); a0 <- sign_restrict(mcmc, S, verbose = FALSE)
+    set.seed(1); a3 <- sign_restrict(mcmc, S, horizons = 3L, verbose = FALSE)
+    expect_gte(mean(attr(a3, "n_tries")), mean(attr(a0, "n_tries")))
+})
+
+test_that("a 3-d array S imposes different signs at different horizons", {
+    sim  <- simulate_var_example(T = 200, seed = 42)
+    mcmc <- post_sim(sim$Y, p = 1L, R = 60L, seed = 1)
+    S <- rbind(c(1, -1, 0), c(1, 1, 0), c(-1, -1, 1))
+    A <- array(0, c(3, 3, 3))
+    A[, , 1] <- S          # full pattern on impact
+    A[3, 3, 2] <- 1        # h = 1: rate still up after a monetary shock
+    A[1, 1, 3] <- 1        # h = 2: output still up after a supply shock
+    set.seed(1)
+    acc <- sign_restrict(mcmc, A, horizons = 2L, max_tries = 5000L, verbose = FALSE)
+    expect_gt(length(acc), 0)
+    for (a in acc) {
+        ir <- compute_irf(a$impact, a$B_rf, n = 3L, p = 1L, H = 2L)
+        expect_true(acpbvar:::check_sign(a$impact, S, 3L))
+        expect_gte(ir[3, 2, 3], -1e-12)
+        expect_gte(ir[1, 3, 1], -1e-12)
+    }
+})
+
+test_that("partial identification works with horizons > 0 and leaves the free column free", {
+    sim  <- simulate_var_example(T = 200, seed = 42)
+    mcmc <- post_sim(sim$Y, p = 1L, R = 60L, seed = 1)
+    S_part <- rbind(supply = c(1, -1, 0), demand = c(1, 1, 0))
+    set.seed(1)
+    acc <- sign_restrict(mcmc, S_part, horizons = 2L, max_tries = 5000L, verbose = FALSE)
+    expect_gt(length(acc), 0)
+    signs_third <- sapply(acc, function(a) sign(a$impact[1, 3]))
+    expect_true(any(signs_third > 0) && any(signs_third < 0))   # third column unrestricted
+    for (a in acc) {
+        ir <- compute_irf(a$impact, a$B_rf, n = 3L, p = 1L, H = 2L)
+        for (h in 0:2) expect_true(acpbvar:::check_sign(ir[, h + 1, ], S_part, 2L))
+    }
+})

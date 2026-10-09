@@ -1,5 +1,9 @@
 # acpbvar 0.1.0
 
+* `sign_restrict()` gains `horizons`: sign restrictions can be imposed on
+  the impulse responses at horizons `0, ..., horizons`, with the same matrix
+  at every horizon or a 3-d array with one sign matrix per horizon.
+
 Initial release (package formerly named `samplerChan`).
 
 * Bayesian structural VAR in the A-form of Chan (2022), with the asymmetric

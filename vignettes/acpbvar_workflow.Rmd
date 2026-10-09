@@ -174,6 +174,38 @@ length(accepted_partial)
 <!-- Da scrivere. Fatti: una riga di S tutta zero viene rifiutata; motivo: shock dichiarato
      identificato senza restrizioni, il suo segno verrebbe dall'ordine dei flip, non da un'ipotesi. -->
 
+### Restrictions beyond impact
+
+<!-- Da scrivere (Federica). Fatti: finora i segni valgono solo all'impatto (h = 0); con `horizons = K`
+     la stessa matrice S è imposta a tutti gli orizzonti 0..K (è il disegno di Uhlig 2005, segni per sei mesi);
+     le risposte ai vari orizzonti sono calcolate per ogni rotazione candidata, quindi servono più tentativi. -->
+
+```{r}
+accepted_h3 <- sign_restrict(mcmc, S, horizons = 3L, max_tries = 5000L, verbose = FALSE)
+length(accepted_h3)
+summary(attr(accepted_h3, "n_tries"))
+```
+
+<!-- Da scrivere. Fatti: per segni diversi a orizzonti diversi S è un array n_id x n_var x (horizons + 1),
+     una matrice per orizzonte; una fetta di zeri lascia libero quell'orizzonte; ogni shock deve avere
+     almeno una restrizione da qualche parte. Esempio sotto: pattern pieno all'impatto, poi solo il tasso
+     a h = 1 e solo l'output a h = 2. -->
+
+```{r}
+S_array <- array(0, dim = c(3, 3, 3),
+                 dimnames = list(sim$shock_names, sim$var_names, paste0("h", 0:2)))
+S_array[, , "h0"] <- S
+S_array["monetary", "interest_rate", "h1"] <- 1
+S_array["supply", "output", "h2"] <- 1
+S_array
+
+accepted_arr <- sign_restrict(mcmc, S_array, horizons = 2L, max_tries = 5000L, verbose = FALSE)
+length(accepted_arr)
+```
+
+<!-- Da scrivere. Fatti: l'identificazione parziale funziona allo stesso modo, S o l'array hanno n_id righe
+     e le colonne oltre n_id restano libere a ogni orizzonte. -->
+
 ### Reading the diagnostics
 
 <!-- Da scrivere. Tre numeri da guardare: convergence, failed_draws, max(n_tries) vs max_tries. -->
