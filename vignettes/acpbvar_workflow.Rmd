@@ -206,6 +206,21 @@ length(accepted_arr)
 <!-- Da scrivere. Fatti: l'identificazione parziale funziona allo stesso modo, S o l'array hanno n_id righe
      e le colonne oltre n_id restano libere a ogni orizzonte. -->
 
+### Two ways of accepting a draw
+
+<!-- Da scrivere (Federica). Fatti: `method = "per_draw"` (default) cerca fino a max_tries rotazioni per ogni
+     draw e tiene la prima buona: la posteriore della forma ridotta resta quella del modello, Q è uniforme
+     dentro l'insieme identificato di ciascun draw. `method = "joint"` estrae una sola rotazione per draw e
+     scarta il draw se non passa, come nel codice di replica di Chan (2022): i draw di forma ridotta vengono
+     ripesati per la misura del loro insieme identificato; gli accettati sono molti meno, serve R più grande.
+     Chan (2022, nota 13) descrive entrambe le implementazioni. -->
+
+```{r}
+accepted_joint <- sign_restrict(mcmc, S, method = "joint", verbose = FALSE)
+length(accepted_joint)
+attr(accepted_joint, "method")
+```
+
 ### Reading the diagnostics
 
 <!-- Da scrivere. Tre numeri da guardare: convergence, failed_draws, max(n_tries) vs max_tries. -->
