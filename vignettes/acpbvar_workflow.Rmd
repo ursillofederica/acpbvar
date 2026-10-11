@@ -160,8 +160,10 @@ summary(n_tries)
 
 ### Partial identification
 
-<!-- Da scrivere (Federica). Fatti: S con meno righe delle variabili = identificazione parziale;
-     le colonne oltre n_id restano libere e senza nome; basta il default n_id = nrow(S). -->
+Partial identification means that only a subset of the structural shocks is
+identified. The matrix `S` has fewer rows than the number of variables. The
+columns of the rotation beyond `n_id` are left unrestricted and carry no
+label; the default `n_id = nrow(S)` is all that is needed.
 
 ```{r}
 S_partial <- S[c("supply", "demand"), ]
@@ -171,14 +173,18 @@ accepted_partial <- sign_restrict(mcmc, S_partial, max_tries = 1000L, verbose = 
 length(accepted_partial)
 ```
 
-<!-- Da scrivere. Fatti: una riga di S tutta zero viene rifiutata; motivo: shock dichiarato
-     identificato senza restrizioni, il suo segno verrebbe dall'ordine dei flip, non da un'ipotesi. -->
+If a row of zeros is passed, it is rejected: it would declare an identified
+shock without restrictions, whose sign would then be fixed by the order in
+which sign flips are tried rather than by an economic hypothesis.
 
 ### Restrictions beyond impact
 
-<!-- Da scrivere (Federica). Fatti: finora i segni valgono solo all'impatto (h = 0); con `horizons = K`
-     la stessa matrice S è imposta a tutti gli orizzonti 0..K (è il disegno di Uhlig 2005, segni per sei mesi);
-     le risposte ai vari orizzonti sono calcolate per ogni rotazione candidata, quindi servono più tentativi. -->
+So far the signs have been imposed on impact only (h = 0, the default
+`horizons = 0`). The argument `horizons = K` extends them to horizons
+0, ..., K, in two possible ways. The first is the same signs at every
+horizon: the same `S` is imposed on all horizons 0, ..., K, as in Uhlig
+(2005). The responses at the various horizons are computed for each
+candidate rotation, so more rotations are screened per draw.
 
 ```{r}
 accepted_h3 <- sign_restrict(mcmc, S, horizons = 3L, max_tries = 5000L, verbose = FALSE)
@@ -186,10 +192,12 @@ length(accepted_h3)
 summary(attr(accepted_h3, "n_tries"))
 ```
 
-<!-- Da scrivere. Fatti: per segni diversi a orizzonti diversi S è un array n_id x n_var x (horizons + 1),
-     una matrice per orizzonte; una fetta di zeri lascia libero quell'orizzonte; ogni shock deve avere
-     almeno una restrizione da qualche parte. Esempio sotto: pattern pieno all'impatto, poi solo il tasso
-     a h = 1 e solo l'output a h = 2. -->
+The second is different signs at different horizons: `S` is an array of
+size `n_id x n_var x (horizons + 1)`, one matrix per horizon; a slice of
+zeros leaves that horizon unrestricted, and each shock must carry at least
+one restriction somewhere. In the example below there are signs for all
+restricted variables at impact, then only the interest rate at h = 1 and
+only output at h = 2.
 
 ```{r}
 S_array <- array(0, dim = c(3, 3, 3),
@@ -203,17 +211,21 @@ accepted_arr <- sign_restrict(mcmc, S_array, horizons = 2L, max_tries = 5000L, v
 length(accepted_arr)
 ```
 
-<!-- Da scrivere. Fatti: l'identificazione parziale funziona allo stesso modo, S o l'array hanno n_id righe
-     e le colonne oltre n_id restano libere a ogni orizzonte. -->
+Partial identification works the same way: the matrix or array `S` has
+`n_id` rows, and the columns beyond `n_id` remain free at each horizon.
 
 ### Two ways of accepting a draw
 
-<!-- Da scrivere (Federica). Fatti: `method = "per_draw"` (default) cerca fino a max_tries rotazioni per ogni
-     draw e tiene la prima buona: la posteriore della forma ridotta resta quella del modello, Q è uniforme
-     dentro l'insieme identificato di ciascun draw. `method = "joint"` estrae una sola rotazione per draw e
-     scarta il draw se non passa, come nel codice di replica di Chan (2022): i draw di forma ridotta vengono
-     ripesati per la misura del loro insieme identificato; gli accettati sono molti meno, serve R più grande.
-     Chan (2022, nota 13) descrive entrambe le implementazioni. -->
+The default is `method = "per_draw"`, which searches up to `max_tries`
+rotations for each draw from the posterior and keeps the first one that
+satisfies the constraints. In this case the reduced-form posterior is left
+untouched, and Q is uniform within the set identified by each posterior
+draw. The alternative is `method = "joint"`, which draws a single rotation
+per sample and discards the draw if that rotation does not pass. As in the
+replication code of Chan (2022), the reduced-form draws are implicitly
+reweighted by the size of their identified set. In this case far fewer draws
+are accepted, so a larger `R` is required. Chan (2022, footnote 13) describes
+both implementations.
 
 ```{r}
 accepted_joint <- sign_restrict(mcmc, S, method = "joint", verbose = FALSE)
@@ -223,28 +235,40 @@ attr(accepted_joint, "method")
 
 ### Reading the diagnostics
 
-<!-- Da scrivere. Tre numeri da guardare: convergence, failed_draws, max(n_tries) vs max_tries. -->
+After a run, three numbers are worth checking before looking at any impulse
+response: the convergence code of the hyperparameter search, the draws that
+found no valid rotation, and how close the search came to its limit. They are
+printed in this order below.
 
 ```{r}
 mcmc$spec$convergence
 ```
 
-<!-- Da scrivere. Fatti: convergence è il codice di optim() per la ricerca di (kappa1, kappa2);
-     0 = convergenza; altrimenti i kappa in spec sono dove si è fermato l'ottimizzatore e post_sim ha avvisato. -->
+`convergence` is the code returned by `optim()` in the search for the
+hyperparameters $\kappa_1$ and $\kappa_2$. If `convergence` is 0, convergence
+has been reached; otherwise the $\kappa$ values stored in `spec` are the point
+at which the optimiser stopped, and `post_sim()` has already issued a
+warning.
 
 ```{r}
 attr(accepted, "failed_draws")
 ```
 
-<!-- Da scrivere. Fatti: failed_draws = indici dei draw senza rotazione entro max_tries;
-     scartarli è giusto se l'insieme identificato è vuoto; è un problema solo se il limite morde. -->
+`failed_draws` contains the indices of the draws for which no rotation
+satisfied the sign constraints within `max_tries`. If the identified set of
+those draws is empty, it makes sense to discard them. The problem arises only
+when the limit bites before a valid rotation is found, which the next number
+tells.
 
 ```{r}
 max(attr(accepted, "n_tries"))
 ```
 
-<!-- Da scrivere. Regola: max(n_tries) molto sotto max_tries => gli scartati sono a insieme vuoto;
-     vicino a max_tries => il limite taglia draw buoni, alzare max_tries finché non succede più. -->
+`n_tries` records, for each accepted draw, the attempt at which the rotation
+satisfying the signs was found; `max_tries` is 10000 by default. Comparing
+`max(n_tries)` with `max_tries` allows you to determine whether the rejected
+draws were rejected by the model or by the limit. If `max(n_tries)` is close
+to `max_tries`, it is advisable to raise the limit and run again.
 
 ## 6. Impulse responses
 
@@ -272,10 +296,13 @@ construction: the supply column is positive on output and negative on
 inflation; the demand column is positive on both; the monetary column is
 negative on output and inflation, positive on the interest rate.
 
-### Numbers rather than pictures
+### Extracting the responses
 
-<!-- Da scrivere. Fatti: irfs è variabile x orizzonte x shock x draw; l'orizzonte h sta in posizione h+1;
-     le sintesi a un orizzonte sono quantili sull'ultimo indice. -->
+`irfs` is a 4-dimensional array: variable × horizon × shock × draw. The
+h-th horizon is located at position h + 1 because the first element
+represents the impact at h = 0. A summary at a fixed horizon is obtained by
+slicing the second index and taking quantiles over the last one, the draws:
+below, the posterior median and the 16-84 band at h = 4.
 
 ```{r}
 h <- 4L
@@ -290,7 +317,8 @@ round(lo, 3)                                # 16th percentile
 round(hi, 3)                                # 84th percentile
 ```
 
-<!-- Da scrivere. Stessa costruzione su tutti gli orizzonti = percorso completo di una risposta. -->
+By fixing the variable and the shock instead of the horizon, we obtain the
+entire trajectory of a response.
 
 ```{r}
 path <- apply(irfs[1, , 3, ], 1, stats::quantile, probs = c(0.16, 0.5, 0.84))
@@ -324,22 +352,24 @@ order of magnitude of the entries, is.
 
 ## 8. Common mistakes
 
-<!-- Da scrivere. Fatti: ogni funzione esportata controlla gli argomenti e si ferma con un messaggio
-     che nomina l'argomento e dice cosa serviva; i chunk sotto hanno error = TRUE per mostrare i messaggi. -->
+Every exported function first checks its arguments and stops, displaying a
+message that identifies the incorrect argument and says what is expected.
+The chunks below are executed with `error = TRUE`, so the messages are shown
+instead of interrupting the vignette.
 
-<!-- Da scrivere: data frame al posto di matrice. -->
+The data must be a numeric matrix, not a data frame:
 
 ```{r, error = TRUE}
 post_sim(as.data.frame(Y), p = 1L, R = 100L)
 ```
 
-<!-- Da scrivere: ordine dei lag non intero. -->
+The lag order must be a whole number:
 
 ```{r, error = TRUE}
 post_sim(Y, p = 1.5, R = 100L)
 ```
 
-<!-- Da scrivere: S con numero di colonne sbagliato; S con un valore fuori da {-1, 0, 1}. -->
+`S` must have one column per variable, and entries in {-1, 0, 1}:
 
 ```{r, error = TRUE}
 sign_restrict(mcmc, S[, 1:2])
@@ -350,7 +380,7 @@ S_bad <- S; S_bad[1, 1] <- 2
 sign_restrict(mcmc, S_bad)
 ```
 
-<!-- Da scrivere: n diverso da quello dei draw accettati. -->
+`n` must match the number of variables in the accepted draws:
 
 ```{r, error = TRUE}
 collect_irfs(accepted, n = 2L, p = p, H = 12L)
@@ -360,6 +390,9 @@ collect_irfs(accepted, n = 2L, p = p, H = 12L)
 
 - Chan, J. C. C. (2022). Asymmetric conjugate priors for large Bayesian
   VARs. *Quantitative Economics*, 13(3), 1145-1169.
+- Uhlig, H. (2005). What are the effects of monetary policy on output?
+  Results from an agnostic identification procedure. *Journal of Monetary
+  Economics*, 52(2), 381-419.
 - Rubio-Ramirez, J. F., Waggoner, D. F., & Zha, T. (2010). Structural
   Vector Autoregressions: Theory of Identification and Algorithms for
   Inference. *Review of Economic Studies*, 77(2), 665-696.
