@@ -11,7 +11,7 @@ post_sim(
   kappa3 = 100,
   unit_root_mean = FALSE,
   var_names = NULL,
-  seed = 123456
+  seed = NULL
 )
 }
 \arguments{
@@ -30,7 +30,9 @@ at one. Default \code{FALSE}.}
 \item{var_names}{Optional character vector of variable names of length
 \code{n}. Stored in the returned spec.}
 
-\item{seed}{Integer seed for reproducibility. Default \code{123456}.}
+\item{seed}{Optional integer seed passed to \code{\link[=set.seed]{set.seed()}} before drawing.
+Default \code{NULL}: the random number generator is left untouched, so set the
+seed yourself before the call if you need reproducibility.}
 }
 \value{
 A list with \code{samples} (the posterior draws of \code{theta} and
@@ -44,4 +46,13 @@ End-to-end wrapper: prepares the equation-by-equation responses and
 regressors, fits univariate AR variance estimates, optimises the Minnesota
 tightness via Empirical Bayes, constructs the asymmetric prior, and runs
 draws \code{R} independent posterior samples, equation by equation.
+}
+\examples{
+sim  <- simulate_var_example(T = 120, seed = 1)
+mcmc <- post_sim(sim$Y, p = 1L, R = 200L)
+
+mcmc$spec$kappa             # tightness chosen by Empirical Bayes
+mcmc$spec$convergence       # 0 = optimiser converged
+dim(mcmc$samples$sigma2)    # R draws x n equations
+length(mcmc$samples$theta)  # R draws, each a list of n coefficient vectors
 }

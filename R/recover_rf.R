@@ -12,6 +12,14 @@
 #'
 #' @return A list with `A`, `A_inv`, `B_struct`, `B_rf`, and `Sigma_rf`.
 #'
+#' @examples
+#' sim  <- simulate_var_example(T = 120, seed = 1)
+#' mcmc <- post_sim(sim$Y, p = 1L, R = 50L)
+#'
+#' rf <- recover_rf(mcmc$samples$theta[[1]], mcmc$samples$sigma2[1, ])
+#' rf$A                        # lower triangular, ones on the diagonal
+#' rf$B_rf                     # reduced-form intercept and lag coefficients
+#' rf$Sigma_rf                 # reduced-form innovation covariance
 #' @export
 recover_rf <- function(theta_draw, sigma2_draw) {
     if (!is.list(theta_draw) || length(theta_draw) != length(sigma2_draw))

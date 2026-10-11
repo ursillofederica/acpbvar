@@ -20,3 +20,15 @@ Loops \code{\link[=compute_irf]{compute_irf()}} over the list of accepted rotati
 \code{\link[=sign_restrict]{sign_restrict()}} and stacks the resulting impulse-response arrays along a
 fourth dimension indexing the draw.
 }
+\examples{
+sim  <- simulate_var_example(T = 120, seed = 1)
+mcmc <- post_sim(sim$Y, p = 1L, R = 200L)
+S    <- rbind(c(1, -1, 0), c(1, 1, 0), c(-1, -1, 1))
+acc  <- sign_restrict(mcmc, S, max_tries = 500L, verbose = FALSE)
+
+irfs <- collect_irfs(acc, n = 3L, p = 1L, H = 8L)
+dim(irfs)                   # variable x horizon x shock x accepted draw
+
+# Posterior median and 68\% band of variable 1 to shock 3, horizons 0..8
+apply(irfs[1, , 3, ], 1, quantile, probs = c(0.16, 0.5, 0.84))
+}

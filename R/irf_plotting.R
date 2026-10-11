@@ -21,6 +21,17 @@
 #' @return Called for its side effect (a grid of base-R plots). Invisibly
 #'   returns `NULL`.
 #'
+#' @examples
+#' sim  <- simulate_var_example(T = 120, seed = 1)
+#' mcmc <- post_sim(sim$Y, p = 1L, R = 200L)
+#' S    <- rbind(c(1, -1, 0), c(1, 1, 0), c(-1, -1, 1))
+#' acc  <- sign_restrict(mcmc, S, max_tries = 500L, verbose = FALSE)
+#' irfs <- collect_irfs(acc, n = 3L, p = 1L, H = 8L)
+#'
+#' plot_irfs(irfs,
+#'           var_names   = sim$var_names,
+#'           shock_names = c("supply", "demand", "monetary"),
+#'           probs       = c(0.16, 0.84))     # 68% posterior band
 #' @export
 plot_irfs <- function(irfs, var_names = NULL, shock_names = NULL,
                       probs = c(0.16, 0.84), col_med = "black",

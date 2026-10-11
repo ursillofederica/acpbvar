@@ -8,7 +8,7 @@
 skip_on_cran()
 
 sim  <- simulate_var_example(T = 400, seed = 20261008)
-mcmc <- post_sim(sim$Y, p = 1L, R = 1500L)
+mcmc <- post_sim(sim$Y, p = 1L, R = 1500L, seed = 20261008)
 
 rf <- lapply(seq_len(mcmc$spec$R), function(r)
     recover_rf(mcmc$samples$theta[[r]], mcmc$samples$sigma2[r, ]))

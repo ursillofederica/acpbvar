@@ -33,3 +33,12 @@ intercept, and (for \code{i > 1}) the contemporaneous values of variables \code{
 through \code{i - 1} entered with a negative sign, so that the impact matrix is
 lower triangular by construction.
 }
+\examples{
+sim <- simulate_var_example(T = 120, seed = 1)
+dat <- build_yX(sim$Y, p = 1L)
+
+length(dat$y_list)          # one response vector per equation
+sapply(dat$X_list, ncol)    # 4, 5, 6: intercept + n*p lags, plus the
+                            # contemporaneous variables ordered before
+                            # the equation (entered with a minus sign)
+}

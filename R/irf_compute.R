@@ -1,35 +1,8 @@
-#' Build the VAR companion-form matrix
-#'
-#' Constructs the `np x np` companion matrix from the reduced-form coefficient
-#' matrix, dropping the intercept column. Used internally by [compute_irf()].
-#'
-#' @param B_rf Reduced-form coefficient matrix as returned by [recover_rf()],
-#'   with the first column the intercept and the remaining `n * p` columns
-#'   the lag coefficients in vector form.
-#' @param n Number of endogenous variables.
-#' @param p VAR lag order.
-#'
-#' @return The `(n * p) x (n * p)` companion matrix.
-#'
-#' @keywords internal
-build_companion <- function(B_rf, n, p) {
-
-    B <- B_rf[, -1, drop = FALSE]
-    np <- n * p
-    F_comp <- matrix(0, np, np)
-    F_comp[1:n, ] <- B
-    if (p > 1) {
-        F_comp[(n + 1):np, 1:(np - n)] <- diag(n * (p - 1))
-    }
-    F_comp
-}
-
-
 #' Compute structural impulse responses for a single draw
 #'
-#' Iterates the companion form for `H + 1` periods to deliver the structural
-#' impulse responses for the given impact matrix and reduced-form coefficient
-#' matrix.
+#' Computes the structural impulse responses at horizons `0, ..., H` for the
+#' given impact matrix and reduced-form coefficient matrix, through the VMA
+#' recursion on the `n x n` lag matrices.
 #'
 #' @param impact The `n x n` impact matrix; columns index shocks.
 #' @param B_rf Reduced-form coefficient matrix as returned by [recover_rf()].
@@ -39,6 +12,15 @@ build_companion <- function(B_rf, n, p) {
 #' @return A three-dimensional array of dimension `n x (H + 1) x n`, indexed
 #'   by `[variable, horizon, shock]`.
 #'
+#' @examples
+#' sim  <- simulate_var_example(T = 120, seed = 1)
+#' mcmc <- post_sim(sim$Y, p = 1L, R = 50L)
+#' S    <- rbind(c(1, -1, 0), c(1, 1, 0), c(-1, -1, 1))
+#' acc  <- sign_restrict(mcmc, S, max_tries = 500L, verbose = FALSE)
+#'
+#' irf1 <- compute_irf(acc[[1]]$impact, acc[[1]]$B_rf, n = 3L, p = 1L, H = 8L)
+#' dim(irf1)                   # variable x horizon (0..H) x shock
+#' irf1[1, , 3]                # response of variable 1 to shock 3 over horizons
 #' @export
 compute_irf <- function(impact, B_rf, n, p, H) {
     if (!is.matrix(impact) || !all(dim(impact) == c(n, n)))
@@ -47,25 +29,23 @@ compute_irf <- function(impact, B_rf, n, p, H) {
         stop("`B_rf` must be an n x (1 + n * p) matrix (intercept first); got ",
              nrow(B_rf), " x ", ncol(B_rf), ".", call. = FALSE)
     check_count(H, "H", min = 0L)
-    # impact: n x n (columns = shocks)
-    # Returns: array n x (H+1) x n  [variable, horizon, shock]
 
-    F_comp <- build_companion(B_rf, n, p)
-    np     <- n * p
-    J      <- matrix(0, np, n)
-    J[1:n, ] <- diag(n)
-
-    irf <- array(0, dim = c(n, H + 1, n))
-
-    F_power <- diag(np)
-    for (h in 0:H) {
-        Phi_h <- t(J) %*% F_power %*% J
-        for (k in seq_len(n)) {
-            irf[, h + 1, k] <- Phi_h %*% impact[, k]
+    # VMA recursion on the n x n lag matrices: Phi_0 = I,
+    # Phi_h = sum_{j=1}^{min(h,p)} Phi_{h-j} B_j. Same numbers as powering the
+    # companion matrix, at a fraction of the cost when n * p is large.
+    B   <- B_rf[, -1, drop = FALSE]
+    Phi <- vector("list", H + 1)
+    Phi[[1]] <- diag(n)
+    for (h in seq_len(H)) {
+        acc <- matrix(0, n, n)
+        for (j in seq_len(min(h, p))) {
+            acc <- acc + Phi[[h - j + 1]] %*% B[, ((j - 1) * n + 1):(j * n), drop = FALSE]
         }
-        F_power <- F_power %*% F_comp
+        Phi[[h + 1]] <- acc
     }
 
+    irf <- array(0, dim = c(n, H + 1, n))
+    for (h in 0:H) irf[, h + 1, ] <- Phi[[h + 1]] %*% impact
     irf
 }
 
@@ -82,6 +62,17 @@ compute_irf <- function(impact, B_rf, n, p, H) {
 #' @return A four-dimensional array of dimension
 #'   `n x (H + 1) x n x n_accepted`.
 #'
+#' @examples
+#' sim  <- simulate_var_example(T = 120, seed = 1)
+#' mcmc <- post_sim(sim$Y, p = 1L, R = 200L)
+#' S    <- rbind(c(1, -1, 0), c(1, 1, 0), c(-1, -1, 1))
+#' acc  <- sign_restrict(mcmc, S, max_tries = 500L, verbose = FALSE)
+#'
+#' irfs <- collect_irfs(acc, n = 3L, p = 1L, H = 8L)
+#' dim(irfs)                   # variable x horizon x shock x accepted draw
+#'
+#' # Posterior median and 68% band of variable 1 to shock 3, horizons 0..8
+#' apply(irfs[1, , 3, ], 1, quantile, probs = c(0.16, 0.5, 0.84))
 #' @export
 collect_irfs <- function(accepted, n, p, H) {
 

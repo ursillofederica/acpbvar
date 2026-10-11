@@ -6,3 +6,4 @@
 ^\.github$
 ^\.gitignore$
 ^\.DS_Store$
+^Rplots\.pdf$

@@ -62,3 +62,31 @@ test_that("recover_rf and simulate_var_example validate their inputs", {
     expect_error(recover_rf(list(1, 2), c(1, -1)), "positive variances")
     expect_error(simulate_var_example(T = 3), "`T`")
 })
+
+test_that("check_S accepts a matrix or a 3-d array and rejects the rest", {
+    S <- rbind(c(1, -1, 0), c(1, 1, 0))
+    a <- acpbvar:::check_S(S, 3, horizons = 2L)
+    expect_equal(dim(a), c(2, 3, 3))
+    expect_true(all(a[, , 2] == S))
+    A <- array(0, c(2, 3, 3)); A[1, 1, ] <- 1; A[2, 2, 2] <- -1
+    expect_equal(dim(acpbvar:::check_S(A, 3, horizons = 2L)), c(2, 3, 3))
+    expect_error(acpbvar:::check_S(A, 3, horizons = 1L), "slices")
+    A0 <- A; A0[2, , ] <- 0
+    expect_error(acpbvar:::check_S(A0, 3, horizons = 2L), "all zero")
+    expect_error(acpbvar:::check_S(1:3, 3), "3-d array")
+    sim  <- simulate_var_example(T = 80, seed = 7)
+    mcmc <- post_sim(sim$Y, p = 1L, R = 5L)
+    expect_error(sign_restrict(mcmc, S, horizons = -1), "`horizons`")
+    expect_error(sign_restrict(mcmc, S, horizons = 1.5), "`horizons`")
+})
+
+test_that("build_s2 matches an OLS AR(4) fit with intercept (mean squared residuals)", {
+    sim <- simulate_var_example(T = 150, seed = 3)
+    dat <- build_yX(sim$Y, p = 1L)
+    s2  <- build_s2(dat$y_list)$s2
+    y   <- dat$y_list[[2]]
+    E   <- embed(y, 5)
+    r   <- residuals(lm(E[, 1] ~ E[, 2:5]))
+    expect_equal(s2[2], mean(r^2))
+    expect_equal(build_s2(list(c(1, 2, 3, 2)))$s2, var(c(1, 2, 3, 2)))   # too short: sample variance
+})

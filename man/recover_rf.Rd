@@ -22,3 +22,12 @@ reconstructs the contemporaneous impact matrix \code{A}, its inverse, the
 reduced-form coefficient matrix \verb{B_rf = A^\{-1\} B_struct}, and the reduced-
 form innovation covariance \verb{Sigma_rf = A^\{-1\} diag(sigma2) A^\{-1\}'}.
 }
+\examples{
+sim  <- simulate_var_example(T = 120, seed = 1)
+mcmc <- post_sim(sim$Y, p = 1L, R = 50L)
+
+rf <- recover_rf(mcmc$samples$theta[[1]], mcmc$samples$sigma2[1, ])
+rf$A                        # lower triangular, ones on the diagonal
+rf$B_rf                     # reduced-form intercept and lag coefficients
+rf$Sigma_rf                 # reduced-form innovation covariance
+}

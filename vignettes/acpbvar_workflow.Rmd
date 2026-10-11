@@ -158,6 +158,118 @@ n_tries <- attr(accepted, "n_tries")
 summary(n_tries)
 ```
 
+### Partial identification
+
+Partial identification means that only a subset of the structural shocks is
+identified. The matrix `S` has fewer rows than the number of variables. The
+columns of the rotation beyond `n_id` are left unrestricted and carry no
+label; the default `n_id = nrow(S)` is all that is needed.
+
+```{r}
+S_partial <- S[c("supply", "demand"), ]
+S_partial
+
+accepted_partial <- sign_restrict(mcmc, S_partial, max_tries = 1000L, verbose = FALSE)
+length(accepted_partial)
+```
+
+If a row of zeros is passed, it is rejected: it would declare an identified
+shock without restrictions, whose sign would then be fixed by the order in
+which sign flips are tried rather than by an economic hypothesis.
+
+### Restrictions beyond impact
+
+So far the signs have been imposed on impact only (h = 0, the default
+`horizons = 0`). The argument `horizons = K` extends them to horizons
+0, ..., K, in two possible ways. The first is the same signs at every
+horizon: the same `S` is imposed on all horizons 0, ..., K, as in Uhlig
+(2005). The responses at the various horizons are computed for each
+candidate rotation, so more rotations are screened per draw.
+
+```{r}
+accepted_h3 <- sign_restrict(mcmc, S, horizons = 3L, max_tries = 5000L, verbose = FALSE)
+length(accepted_h3)
+summary(attr(accepted_h3, "n_tries"))
+```
+
+The second is different signs at different horizons: `S` is an array of
+size `n_id x n_var x (horizons + 1)`, one matrix per horizon; a slice of
+zeros leaves that horizon unrestricted, and each shock must carry at least
+one restriction somewhere. In the example below there are signs for all
+restricted variables at impact, then only the interest rate at h = 1 and
+only output at h = 2.
+
+```{r}
+S_array <- array(0, dim = c(3, 3, 3),
+                 dimnames = list(sim$shock_names, sim$var_names, paste0("h", 0:2)))
+S_array[, , "h0"] <- S
+S_array["monetary", "interest_rate", "h1"] <- 1
+S_array["supply", "output", "h2"] <- 1
+S_array
+
+accepted_arr <- sign_restrict(mcmc, S_array, horizons = 2L, max_tries = 5000L, verbose = FALSE)
+length(accepted_arr)
+```
+
+Partial identification works the same way: the matrix or array `S` has
+`n_id` rows, and the columns beyond `n_id` remain free at each horizon.
+
+### Two ways of accepting a draw
+
+The default is `method = "per_draw"`, which searches up to `max_tries`
+rotations for each draw from the posterior and keeps the first one that
+satisfies the constraints. In this case the reduced-form posterior is left
+untouched, and Q is uniform within the set identified by each posterior
+draw. The alternative is `method = "joint"`, which draws a single rotation
+per sample and discards the draw if that rotation does not pass. As in the
+replication code of Chan (2022), the reduced-form draws are implicitly
+reweighted by the size of their identified set. In this case far fewer draws
+are accepted, so a larger `R` is required. Chan (2022, footnote 13) describes
+both implementations.
+
+```{r}
+accepted_joint <- sign_restrict(mcmc, S, method = "joint", verbose = FALSE)
+length(accepted_joint)
+attr(accepted_joint, "method")
+```
+
+### Reading the diagnostics
+
+After a run, three numbers are worth checking before looking at any impulse
+response: the convergence code of the hyperparameter search, the draws that
+found no valid rotation, and how close the search came to its limit. They are
+printed in this order below.
+
+```{r}
+mcmc$spec$convergence
+```
+
+`convergence` is the code returned by `optim()` in the search for the
+hyperparameters $\kappa_1$ and $\kappa_2$. If `convergence` is 0, convergence
+has been reached; otherwise the $\kappa$ values stored in `spec` are the point
+at which the optimiser stopped, and `post_sim()` has already issued a
+warning.
+
+```{r}
+attr(accepted, "failed_draws")
+```
+
+`failed_draws` contains the indices of the draws for which no rotation
+satisfied the sign constraints within `max_tries`. If the identified set of
+those draws is empty, it makes sense to discard them. The problem arises only
+when the limit bites before a valid rotation is found, which the next number
+tells.
+
+```{r}
+max(attr(accepted, "n_tries"))
+```
+
+`n_tries` records, for each accepted draw, the attempt at which the rotation
+satisfying the signs was found; `max_tries` is 10000 by default. Comparing
+`max(n_tries)` with `max_tries` allows you to determine whether the rejected
+draws were rejected by the model or by the limit. If `max(n_tries)` is close
+to `max_tries`, it is advisable to raise the limit and run again.
+
 ## 6. Impulse responses
 
 `collect_irfs()` stacks the per-draw impulse responses into a single
@@ -184,6 +296,36 @@ construction: the supply column is positive on output and negative on
 inflation; the demand column is positive on both; the monetary column is
 negative on output and inflation, positive on the interest rate.
 
+### Extracting the responses
+
+`irfs` is a 4-dimensional array: variable × horizon × shock × draw. The
+h-th horizon is located at position h + 1 because the first element
+represents the impact at h = 0. A summary at a fixed horizon is obtained by
+slicing the second index and taking quantiles over the last one, the draws:
+below, the posterior median and the 16-84 band at h = 4.
+
+```{r}
+h <- 4L
+resp <- irfs[, h + 1, , ]                  # variable x shock x draw
+med  <- apply(resp, c(1, 2), stats::median)
+lo   <- apply(resp, c(1, 2), stats::quantile, probs = 0.16)
+hi   <- apply(resp, c(1, 2), stats::quantile, probs = 0.84)
+dimnames(med) <- dimnames(lo) <- dimnames(hi) <- list(sim$var_names, sim$shock_names)
+
+round(med, 3)                               # posterior median at horizon 4
+round(lo, 3)                                # 16th percentile
+round(hi, 3)                                # 84th percentile
+```
+
+By fixing the variable and the shock instead of the horizon, we obtain the
+entire trajectory of a response.
+
+```{r}
+path <- apply(irfs[1, , 3, ], 1, stats::quantile, probs = c(0.16, 0.5, 0.84))
+colnames(path) <- paste0("h", 0:H)
+round(path, 3)                              # output after a monetary shock
+```
+
 ## 7. Recovery of the true impact
 
 Averaging the impact column across accepted draws gives a posterior
@@ -208,10 +350,49 @@ within the admissible set, so exact numerical recovery is not the
 relevant standard; the recovery of the qualitative pattern, and of the
 order of magnitude of the entries, is.
 
+## 8. Common mistakes
+
+Every exported function first checks its arguments and stops, displaying a
+message that identifies the incorrect argument and says what is expected.
+The chunks below are executed with `error = TRUE`, so the messages are shown
+instead of interrupting the vignette.
+
+The data must be a numeric matrix, not a data frame:
+
+```{r, error = TRUE}
+post_sim(as.data.frame(Y), p = 1L, R = 100L)
+```
+
+The lag order must be a whole number:
+
+```{r, error = TRUE}
+post_sim(Y, p = 1.5, R = 100L)
+```
+
+`S` must have one column per variable, and entries in {-1, 0, 1}:
+
+```{r, error = TRUE}
+sign_restrict(mcmc, S[, 1:2])
+```
+
+```{r, error = TRUE}
+S_bad <- S; S_bad[1, 1] <- 2
+sign_restrict(mcmc, S_bad)
+```
+
+`n` must match the number of variables in the accepted draws:
+
+```{r, error = TRUE}
+collect_irfs(accepted, n = 2L, p = p, H = 12L)
+```
+
 ## References
 
 - Chan, J. C. C. (2022). Asymmetric conjugate priors for large Bayesian
   VARs. *Quantitative Economics*, 13(3), 1145-1169.
+- Uhlig, H. (2005). What are the effects of monetary policy on output?
+  Results from an agnostic identification procedure. *Journal of Monetary
+  Economics*, 52(2), 381-419.
 - Rubio-Ramirez, J. F., Waggoner, D. F., & Zha, T. (2010). Structural
   Vector Autoregressions: Theory of Identification and Algorithms for
   Inference. *Review of Economic Studies*, 77(2), 665-696.

@@ -1,5 +1,16 @@
 # acpbvar 0.1.0
 
+* `sign_restrict()` gains `method = c("per_draw", "joint")`: the joint
+  accept-reject of Chan's replication code (one rotation per posterior draw)
+  is available next to the default per-draw search.
+* `build_s2()` computes the AR(4) residual variances by OLS (mean of squared
+  residuals), as in Chan's `get_resid_var.m`, instead of `stats::arima()`.
+* `compute_irf()` uses the VMA recursion instead of companion-matrix powers
+  (identical output, much faster for large `n * p`).
+* `sign_restrict()` gains `horizons`: sign restrictions can be imposed on
+  the impulse responses at horizons `0, ..., horizons`, with the same matrix
+  at every horizon or a 3-d array with one sign matrix per horizon.
+
 Initial release (package formerly named `samplerChan`).
 
 * Bayesian structural VAR in the A-form of Chan (2022), with the asymmetric
@@ -24,3 +35,7 @@ Fixes relative to the development version of May 2026:
 * Added testthat regression tests and a DGP recovery test.
 * All exported functions validate their arguments and stop with an
   informative message (`R/validate.R`).
+* Posterior quantities (Cholesky factor of the precision, posterior mean,
+  inverse-gamma parameters) are computed once per equation; each draw is then
+  one `rgamma()` and one triangular solve. Same draws for the same seed,
+  roughly 200x faster for 50 variables and 4 lags.

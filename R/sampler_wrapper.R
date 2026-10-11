@@ -14,7 +14,9 @@
 #'   at one. Default `FALSE`.
 #' @param var_names Optional character vector of variable names of length
 #'   `n`. Stored in the returned spec.
-#' @param seed Integer seed for reproducibility. Default `123456`.
+#' @param seed Optional integer seed passed to [set.seed()] before drawing.
+#'   Default `NULL`: the random number generator is left untouched, so set the
+#'   seed yourself before the call if you need reproducibility.
 #'
 #' @return A list with `samples` (the posterior draws of `theta` and
 #'   `sigma2`), `spec` (sampler configuration, optimised tightness, log
@@ -22,10 +24,18 @@
 #'   for the hyperparameter search, residual variances, variable names), and `dat`
 #'   (the prepared response/regressor objects).
 #'
+#' @examples
+#' sim  <- simulate_var_example(T = 120, seed = 1)
+#' mcmc <- post_sim(sim$Y, p = 1L, R = 200L)
+#'
+#' mcmc$spec$kappa             # tightness chosen by Empirical Bayes
+#' mcmc$spec$convergence       # 0 = optimiser converged
+#' dim(mcmc$samples$sigma2)    # R draws x n equations
+#' length(mcmc$samples$theta)  # R draws, each a list of n coefficient vectors
 #' @export
 post_sim <- function(Y, p, R,
                      kappa3 = 100, unit_root_mean = FALSE,
-                     var_names = NULL, seed = 123456) {
+                     var_names = NULL, seed = NULL) {
 
     check_Y(Y, fun = "post_sim")
     check_count(p, "p", min = 1L, max = nrow(Y) - 1L)
@@ -36,7 +46,10 @@ post_sim <- function(Y, p, R,
              length(var_names), ".", call. = FALSE)
 
     n     <- ncol(Y)
-    set.seed(seed)
+    if (!is.null(seed)) {
+        check_count(seed, "seed", min = -.Machine$integer.max, max = .Machine$integer.max)
+        set.seed(seed)
+    }
 
     dat   <- build_yX(Y, p)
     s2out <- build_s2(dat$y_list)
@@ -51,6 +64,11 @@ post_sim <- function(Y, p, R,
                               opt$kappa1, opt$kappa2, kappa3, unit_root_mean)
 
 
+    # Posterior quantities do not depend on the draw: computed once per equation
+    post_list <- lapply(seq_len(n), function(i)
+        posterior_eq(dat$y_list[[i]], dat$X_list[[i]],
+                     prior$nu[i], prior$m[[i]], prior$V[[i]], prior$S[i]))
+
     samples <- list(
         theta  = vector("list", R),
         sigma2 = matrix(NA, R, n)
@@ -64,8 +82,7 @@ post_sim <- function(Y, p, R,
 
     for (i in seq_len(R)) {
 
-        post <- draw_all(dat$y_list, dat$X_list,
-                         prior$nu, prior$m, prior$V, prior$S)
+        post <- draw_all(post_list)
 
         samples$theta[[i]]  <- post$theta
         samples$sigma2[i, ] <- post$sigma2

@@ -4,14 +4,50 @@
 \alias{sign_restrict}
 \title{Structural identification via sign restrictions (RRWZ algorithm)}
 \usage{
-sign_restrict(mcmc, S, n_id = nrow(S), max_tries = 10000, verbose = TRUE)
+sign_restrict(
+  mcmc,
+  S,
+  n_id = nrow(S),
+  horizons = 0L,
+  method = c("per_draw", "joint"),
+  max_tries = 10000,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{mcmc}{A posterior object produced by \code{\link[=post_sim]{post_sim()}}.}
 
-\item{S}{An \verb{n_id x n_var} matrix of sign restrictions.}
+\item{S}{Sign restrictions, with entries \code{+1}, \code{-1} or \code{0} (unrestricted).
+Either an \verb{n_id x n_var} matrix (rows: identified shocks, columns:
+variables), imposed on the impulse responses at every horizon
+\verb{0, ..., horizons}; or an \verb{n_id x n_var x (horizons + 1)} array with one
+matrix per horizon, so that different signs can be imposed at different
+horizons (a slice of zeros leaves that horizon unrestricted). Every
+identified shock must carry at least one non-zero restriction at some
+horizon. A matrix with \code{horizons = 0} restricts the impact only.}
 
-\item{n_id}{Number of identified shocks (defaults to \code{nrow(S)}).}
+\item{n_id}{Number of identified shocks (defaults to \code{nrow(S)}). Columns of
+the rotation beyond \code{n_id} are left unrestricted and unlabelled.}
+
+\item{horizons}{Non-negative integer. Sign restrictions are imposed on the
+impulse responses at horizons \verb{0, 1, ..., horizons}; the default \code{0L}
+restricts the impact matrix only. Responses at later horizons are
+computed with \code{\link[=compute_irf]{compute_irf()}} from the reduced form of each draw, so the
+cost per candidate rotation grows with \code{horizons}, and draws whose
+identified set is empty cost \code{max_tries} candidates each.}
+
+\item{method}{\code{"per_draw"} (default) or \code{"joint"}. With \code{"per_draw"}, up to
+\code{max_tries} rotations are tried for each posterior draw and the draw is
+kept with the first admissible one: the posterior of the reduced form is
+left unchanged (draws whose identified set is empty are dropped), and the
+rotation is uniform within the identified set of each draw. With
+\code{"joint"}, a single rotation is drawn for each posterior draw and the draw
+is discarded if it fails, as in the replication code of Chan (2022):
+reduced-form draws are then reweighted by the size of their identified
+set. Chan (2022, footnote 13) describes both implementations. Under
+\code{"joint"} the number of accepted draws is random and typically much
+smaller than \code{R}; \code{max_tries} is ignored. Other R packages (BVAR,
+bsvarSIGNs) use the per-draw search.}
 
 \item{max_tries}{Maximum number of \code{Q} candidates per posterior draw before
 moving on. Default \code{10000}. Draws for which no rotation
@@ -39,4 +75,37 @@ the Haar measure (via QR decomposition of a standard normal matrix, with
 sign normalisation on the diagonal of \code{R}); for each candidate, all
 \code{2^n_id} sign flips on the columns are checked against the restrictions,
 and the first accepted rotation is stored.
+}
+\examples{
+sim  <- simulate_var_example(T = 120, seed = 1)
+mcmc <- post_sim(sim$Y, p = 1L, R = 200L)
+
+# Rows: identified shocks. Columns: variables (output, inflation, rate).
+# +1 / -1 restrict the sign of the impact response, 0 leaves it free.
+S <- rbind(supply   = c( 1, -1,  0),
+           demand   = c( 1,  1,  0),
+           monetary = c(-1, -1,  1))
+
+acc <- sign_restrict(mcmc, S, max_tries = 500L, verbose = FALSE)
+length(acc)                           # accepted draws (one rotation each)
+acc[[1]]$impact                       # impact matrix of the first draw
+summary(attr(acc, "n_tries"))         # rotations screened per acceptance;
+                                      # compare the max with max_tries
+attr(acc, "failed_draws")             # draws dropped after max_tries
+
+# Partial identification: two shocks, the third column is left free
+S2  <- S[1:2, ]
+acc2 <- sign_restrict(mcmc, S2, max_tries = 500L, verbose = FALSE)
+
+# Same signs imposed on impact and on the next three horizons (as in
+# Uhlig 2005): more demanding, so more rotations are screened per draw
+acc3 <- sign_restrict(mcmc, S, horizons = 3L, max_tries = 2000L, verbose = FALSE)
+summary(attr(acc3, "n_tries"))
+
+# Different signs at different horizons: one matrix per horizon
+A <- array(0, c(3, 3, 3))
+A[, , 1] <- S            # impact: full pattern
+A[3, 3, 2] <- 1          # h = 1: interest rate still up after a monetary shock
+A[1, 1, 3] <- 1          # h = 2: output still up after a supply shock
+accA <- sign_restrict(mcmc, A, horizons = 2L, max_tries = 2000L, verbose = FALSE)
 }
