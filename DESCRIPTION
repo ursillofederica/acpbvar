@@ -6,7 +6,7 @@ Authors@R:
     person(given = "Federica",
            family = "Ursillo",
            role = c("aut", "cre"),
-           email = "federica.ursillo@studenti.unipd.it")
+           email = "federica.ursillo@outlook.com")
 Description: Implements Bayesian estimation of structural Vector Autoregressions
     in the asymmetric A-form of Chan (2022) <doi:10.3982/QE1381>, with an
     asymmetric Minnesota prior
