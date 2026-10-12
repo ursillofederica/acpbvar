@@ -1,0 +1,212 @@
+---
+title: "acpbvar on real data: the monetary policy shock of Uhlig (2005)"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{acpbvar on real data: the monetary policy shock of Uhlig (2005)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+has_bsvarSIGNs <- requireNamespace("bsvarSIGNs", quietly = TRUE)
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment  = "#>",
+    fig.width  = 7,
+    fig.height = 5,
+    dpi = 100,
+    eval = has_bsvarSIGNs
+)
+options(mcmc.pb = FALSE)
+```
+
+```{r}
+library(acpbvar)
+```
+
+This second vignette uses the standard sign-restriction example in
+structural VARs, following Uhlig (2005). It is the reference exercise for
+studying the effects of monetary policy shocks on U.S. output, identified by
+signs only, and it imposes the signs on several horizons. The data are
+available through the R package bsvarSIGNs, which must be installed: if it
+is missing, the code chunks below are not run.
+
+## 1. The data
+
+The `monetary` dataset of bsvarSIGNs is sourced from the replication
+package of Antolín-Díaz and Rubio-Ramírez (2018). It comprises six monthly
+time series spanning January 1965 to August 2007 (Uhlig stops in 2003):
+real GDP, GDP deflator, consumer price index (CPI), total reserves and
+non-borrowed reserves, all in logarithms, and the federal funds rate in
+percentage points. The logarithmic values are multiplied by 100 here, so
+that the responses read as percentages.
+
+```{r}
+data("monetary", package = "bsvarSIGNs")
+Y <- as.matrix(monetary)
+Y[, 1:5] <- 100 * Y[, 1:5]
+var_names <- c("real GDP", "GDP deflator", "CPI", "total reserves",
+               "non-borrowed reserves", "fed funds")
+colnames(Y) <- var_names
+dim(Y)
+round(head(Y, 3), 2)
+```
+
+## 2. The model
+
+The model under consideration is a VAR(12), consistent with the approach in
+Uhlig (2005). The hyperparameters $\kappa_1$ and $\kappa_2$ are selected by
+Empirical Bayes. The total number of draws is fixed at 1000; the chunk prints
+the selected hyperparameters, the convergence code and the elapsed time.
+
+```{r}
+p <- 12L
+t_post <- system.time(
+    mcmc <- post_sim(Y, p = p, R = 1000L, var_names = var_names, seed = 1)
+)
+round(mcmc$spec$kappa, 4)
+mcmc$spec$convergence
+t_post[["elapsed"]]
+```
+
+## 3. The identification of Uhlig (2005)
+
+A single shock is identified (`n_id = 1`, `S` is a row vector). According
+to Uhlig, after a contractionary monetary policy shock prices (deflator,
+CPI) and non-borrowed reserves do not rise, as the Federal Reserve drains
+liquidity, and the federal funds rate does not fall. The entry for real GDP
+is zero, i.e. unrestricted: the effect on output is the question of the
+exercise and is not imposed. Total reserves are also left unrestricted,
+since their sign is not determined a priori. The horizon is set to 5, as
+Uhlig imposes the sign restrictions on impact and for the following five
+months; thus h ranges from 0 to 5. The chunk returns the row vector `S`,
+the indices of the discarded draws (none here) and the summary of the
+number of rotations tried per draw.
+
+```{r}
+S <- matrix(c(0, -1, -1, 0, -1, 1), nrow = 1,
+            dimnames = list("monetary", var_names))
+S
+t_sign <- system.time(
+    accepted <- sign_restrict(mcmc, S, horizons = 5L, max_tries = 20000L, verbose = FALSE)
+)
+length(accepted)
+attr(accepted, "failed_draws")
+summary(attr(accepted, "n_tries"))
+t_sign[["elapsed"]]
+```
+
+## 4. The responses
+
+The maximum impulse response horizon is set to 24 months. The impulse
+response functions (IRFs) include six shocks, although only the first shock
+is identified, so only its slice is kept. `plot_irfs()` draws the response
+of each variable to the monetary policy shock, with the posterior median
+and the 16-84 band.
+
+```{r, fig.height = 9}
+H <- 24L
+irfs <- collect_irfs(accepted, n = 6L, p = p, H = H)
+irf_mp <- irfs[, , 1, , drop = FALSE]          # the identified shock only
+plot_irfs(irf_mp, var_names = var_names, shock_names = "monetary policy",
+          probs = c(0.16, 0.84))
+```
+
+The second chunk provides the output trajectory, including the median and
+the 16th to 84th percentile equal-tailed credible band at h ∈ {0, 6, 12, 24}
+months. The findings of Uhlig are corroborated: there is no clear evidence
+that a monetary tightening reduces real GDP, as the credible bands encompass
+zero at every horizon and the median is even positive in the first months.
+
+```{r}
+path <- apply(irf_mp[1, , 1, ], 1, stats::quantile, probs = c(0.16, 0.5, 0.84))
+colnames(path) <- paste0("h", 0:H)
+round(path[, c(1, 7, 13, 25)], 3)             # real GDP after a monetary tightening
+```
+
+## 5. Comparison with bsvarSIGNs
+
+This section replicates the same procedure using bsvarSIGNs (Wang and
+Woźniak), which is characterised by the hierarchical Minnesota prior of
+Giannone, Lenza and Primiceri, with sum-of-coefficients and single-unit-root
+dummy observations and hyperparameters estimated by MCMC. The sampler is
+implemented in C++. The `sign_irf` argument of bsvarSIGNs is a
+three-dimensional array structured as variable by shock by horizon, where
+`NA` indicates an unrestricted response. In acpbvar, the matrix `S` is
+structured as shock by variable, with 0 indicating an unrestricted response.
+The number of draws remains the same, and only a single core is used.
+
+```{r}
+sign_irf <- matrix(NA, 6, 6)
+sign_irf[, 1] <- c(NA, -1, -1, NA, -1, 1)      # variable x shock, horizon 0
+sign_irf <- array(sign_irf, dim = c(6, 6, 6))  # horizons 0..5
+set.seed(1)
+t_bs <- system.time({
+    spec_bs <- bsvarSIGNs::specify_bsvarSIGN$new(Y, p = p, sign_irf = sign_irf, mc.cores = 1)
+    post_bs <- bsvars::estimate(spec_bs, S = 1000, show_progress = FALSE)
+    irf_bs  <- bsvars::compute_impulse_responses(post_bs, horizon = H)
+})
+dim(irf_bs)                                   # variable x shock x horizon x draw
+t_bs[["elapsed"]]
+```
+
+The plot presents the median responses to the monetary shock, displaying
+acpbvar in black and bsvarSIGNs in red. For values of h between 0 and 5,
+where the signs bind, and in the following months the two medians overlap
+on all six series; they diverge at longer horizons on real GDP and reserves,
+where the data are weak and the influence of the prior distributions
+increases: the dummy observations of the GLP prior sustain the persistence
+of the responses, while the asymmetric conjugate prior lets them decay. The
+differences lie within the credible bands of either package. The table below
+reports the elapsed seconds on the machine that rendered the vignette.
+
+```{r, fig.height = 5.5}
+med_ac <- apply(irf_mp[, , 1, ], c(1, 2), stats::median)
+med_bs <- apply(irf_bs[, 1, , ], c(1, 2), stats::median)
+op <- par(mfrow = c(2, 3), mar = c(2.5, 2.5, 2, 0.5), mgp = c(1.4, 0.4, 0))
+for (j in 1:6) {
+    ylim <- range(med_ac[j, ], med_bs[j, ])
+    plot(0:H, med_ac[j, ], type = "l", lwd = 2, ylim = ylim, xlab = "", ylab = "",
+         main = var_names[j], cex.main = 0.9)
+    lines(0:H, med_bs[j, ], lwd = 2, lty = 2, col = "firebrick")
+    abline(h = 0, lty = 3, col = "grey50")
+    if (j == 1) legend("topright", c("acpbvar", "bsvarSIGNs"), lwd = 2,
+                       lty = c(1, 2), col = c("black", "firebrick"), bty = "n", cex = 0.8)
+}
+par(op)
+```
+
+```{r}
+data.frame(package = c("acpbvar", "bsvarSIGNs"),
+           seconds = round(c(t_post[["elapsed"]] + t_sign[["elapsed"]], t_bs[["elapsed"]]), 1))
+```
+
+## 6. The joint acceptance method
+
+The identification is repeated using `method = "joint"`, where each draw
+is associated with a single rotation, and the draws whose rotation does not
+satisfy the signs are discarded. Since the per-draw search needed 16
+rotations on average, about one draw in sixteen survives. Achieving the
+same precision as the `per_draw` method requires setting `R` to several
+tens of thousands.
+
+```{r}
+accepted_joint <- sign_restrict(mcmc, S, horizons = 5L, method = "joint", verbose = FALSE)
+length(accepted_joint)
+```
+
+## References
+
+- Antolín-Díaz, J., & Rubio-Ramírez, J. F. (2018). Narrative Sign
+  Restrictions for SVARs. *American Economic Review*, 108(10), 2802-2829.
+- Chan, J. C. C. (2022). Asymmetric conjugate priors for large Bayesian
+  VARs. *Quantitative Economics*, 13(3), 1145-1169.
+- Giannone, D., Lenza, M., & Primiceri, G. E. (2015). Prior Selection for
+  Vector Autoregressions. *Review of Economics and Statistics*, 97(2),
+  436-451.
+- Uhlig, H. (2005). What are the effects of monetary policy on output?
+  Results from an agnostic identification procedure. *Journal of Monetary
+  Economics*, 52(2), 381-419.
+- Wang, X., & Woźniak, T. (2025). bsvarSIGNs: Bayesian SVARs with Sign,
+  Zero, and Narrative Restrictions. R package version 2.0,
+  <https://doi.org/10.32614/CRAN.package.bsvarSIGNs>.

@@ -1,5 +1,8 @@
 # acpbvar 0.1.0
 
+* New vignette on real data: the monetary policy shock of Uhlig (2005) on
+  the `monetary` data shipped by bsvarSIGNs (in Suggests), with a comparison
+  of impulse responses and timings against bsvarSIGNs.
 * `sign_restrict()` gains `method = c("per_draw", "joint")`: the joint
   accept-reject of Chan's replication code (one rotation per posterior draw)
   is available next to the default per-draw search.
