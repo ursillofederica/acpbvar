@@ -127,10 +127,12 @@ round(path[, c(1, 7, 13, 25)], 3)             # real GDP after a monetary tighte
 ## 5. Comparison with bsvarSIGNs
 
 This section replicates the same procedure using bsvarSIGNs (Wang and
-Woźniak), which is characterised by the hierarchical Minnesota prior of
-Giannone, Lenza and Primiceri, with sum-of-coefficients and single-unit-root
-dummy observations and hyperparameters estimated by MCMC. The sampler is
-implemented in C++. The `sign_irf` argument of bsvarSIGNs is a
+Woźniak), which is characterised by the Minnesota prior of Giannone, Lenza
+and Primiceri with sum-of-coefficients and single-unit-root dummy
+observations. In bsvarSIGNs the hyperparameters can be estimated by a
+separate adaptive Metropolis step (`estimate_hyper()`), which is not called
+here: they are kept at the package defaults. The sampler is implemented in
+C++. The `sign_irf` argument of bsvarSIGNs is a
 three-dimensional array structured as variable by shock by horizon, where
 `NA` indicates an unrestricted response. In acpbvar, the matrix `S` is
 structured as shock by variable, with 0 indicating an unrestricted response.
@@ -155,8 +157,9 @@ acpbvar in black and bsvarSIGNs in red. For values of h between 0 and 5,
 where the signs bind, and in the following months the two medians overlap
 on all six series; they diverge at longer horizons on real GDP and reserves,
 where the data are weak and the influence of the prior distributions
-increases: the dummy observations of the GLP prior sustain the persistence
-of the responses, while the asymmetric conjugate prior lets them decay. The
+increases: the dummy observations of the Minnesota prior, at the default
+hyperparameters, sustain the persistence of the responses, while the
+asymmetric conjugate prior lets them decay. The
 differences lie within the credible bands of either package. The table below
 reports the elapsed seconds on the machine that rendered the vignette.
 
@@ -208,5 +211,5 @@ length(accepted_joint)
   Results from an agnostic identification procedure. *Journal of Monetary
   Economics*, 52(2), 381-419.
 - Wang, X., & Woźniak, T. (2025). bsvarSIGNs: Bayesian SVARs with Sign,
-  Zero, and Narrative Restrictions. R package version 2.0,
+  Zero, and Narrative Restrictions. R package version 3.0,
   <https://doi.org/10.32614/CRAN.package.bsvarSIGNs>.
