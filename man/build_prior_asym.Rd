@@ -11,7 +11,8 @@ build_prior_asym(
   kappa1,
   kappa2,
   kappa3 = 100,
-  unit_root_mean = FALSE
+  unit_root_mean = FALSE,
+  elicit = c("structural", "reduced")
 )
 }
 \arguments{
@@ -29,6 +30,15 @@ diffuse choice.}
 \item{unit_root_mean}{Logical; if \code{TRUE}, sets the prior mean of the
 coefficient on the first own lag to \code{1} (random-walk prior); otherwise
 zero. Default \code{FALSE}.}
+
+\item{elicit}{Where the Minnesota prior on the lag coefficients is
+elicited: \code{"structural"} (default) places it directly on the structural
+coefficients; \code{"reduced"} places it on the reduced-form coefficients and
+derives the implied structural hyperparameters (Chan 2022, Online
+Supplement, Section 2): prior means are unchanged and the prior variance
+of equation \code{i} is augmented by the sum, over the equations ordered
+before it, of their prior variances plus their squared prior means
+divided by the residual variance.}
 }
 \value{
 A list with per-equation prior components:

@@ -15,6 +15,14 @@
 #' @param unit_root_mean Logical; if `TRUE`, sets the prior mean of the
 #'   coefficient on the first own lag to `1` (random-walk prior); otherwise
 #'   zero. Default `FALSE`.
+#' @param elicit Where the Minnesota prior on the lag coefficients is
+#'   elicited: `"structural"` (default) places it directly on the structural
+#'   coefficients; `"reduced"` places it on the reduced-form coefficients and
+#'   derives the implied structural hyperparameters (Chan 2022, Online
+#'   Supplement, Section 2): prior means are unchanged and the prior variance
+#'   of equation `i` is augmented by the sum, over the equations ordered
+#'   before it, of their prior variances plus their squared prior means
+#'   divided by the residual variance.
 #'
 #' @return A list with per-equation prior components:
 #'   `m_alpha`, `V_alpha` (contemporaneous coefficients),
@@ -23,7 +31,9 @@
 #'   `nu`, `S` (Inverse-Gamma hyperparameters for the structural variances).
 #'
 #' @keywords internal
-build_prior_asym <- function(y_list, p, s2, kappa1, kappa2, kappa3 = 100, unit_root_mean = FALSE) {
+build_prior_asym <- function(y_list, p, s2, kappa1, kappa2, kappa3 = 100,
+                             unit_root_mean = FALSE,
+                             elicit = c("structural", "reduced")) {
 
     n <- length(y_list)
     p <- p
@@ -37,6 +47,8 @@ build_prior_asym <- function(y_list, p, s2, kappa1, kappa2, kappa3 = 100, unit_r
 
     nu <- numeric(n)
     S  <- numeric(n)
+
+    elicit <- match.arg(elicit)
 
     for (i in seq_len(n)) {
 
@@ -73,7 +85,23 @@ build_prior_asym <- function(y_list, p, s2, kappa1, kappa2, kappa3 = 100, unit_r
         }
 
         V_beta_list[[i]] <- v_beta
+    }
 
+    # elicitation on the reduced form (Chan 2022, Online Supplement, Section 2):
+    # V_beta,i = V_tilde,i + sum_{l < i} [V_tilde,l + m_tilde,l^2 / s2_l];
+    # prior means unchanged; the sums use the uncorrected V_tilde,l
+    if (elicit == "reduced") {
+        V_tilde_list <- V_beta_list
+        for (i in seq_len(n)[-1]) {
+            add <- numeric(1 + n * p)
+            for (l in 1:(i - 1)) {
+                add <- add + V_tilde_list[[l]] + m_beta_list[[l]]^2 / s2[l]
+            }
+            V_beta_list[[i]] <- V_tilde_list[[i]] + add
+        }
+    }
+
+    for (i in seq_len(n)) {
         m_list[[i]] <- c(m_alpha_list[[i]], m_beta_list[[i]])
         V_list[[i]] <- c(V_alpha_list[[i]], V_beta_list[[i]])
     }
