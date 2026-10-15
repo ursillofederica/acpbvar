@@ -13,9 +13,12 @@
 #'
 #' @keywords internal
 log_mlik_asym <- function(y_list, X_list, p, s2, kappa1, kappa2,
-                          kappa3 = 100, unit_root_mean = FALSE) {
+                          kappa3 = 100, unit_root_mean = FALSE,
+                          elicit = c("structural", "reduced")) {
 
-    prior <- build_prior_asym(y_list, p, s2, kappa1, kappa2, kappa3, unit_root_mean)
+    elicit <- match.arg(elicit)
+    prior <- build_prior_asym(y_list, p, s2, kappa1, kappa2, kappa3, unit_root_mean,
+                              elicit = elicit)
     m_i   <- prior$m
     V_i   <- prior$V
     nu_i  <- prior$nu
@@ -69,8 +72,9 @@ log_mlik_asym <- function(y_list, X_list, p, s2, kappa1, kappa2,
 #' Selects the own-lag and cross-lag tightness parameters
 #' \eqn{(\kappa_1, \kappa_2)} by maximising the closed-form log marginal
 #' likelihood. Optimisation is performed by Nelder-Mead in log-space, with the
-#' transformation `kappa = exp(log_kappa)` ensuring positivity; values outside
-#' the unit interval are penalised with a large constant.
+#' transformation `kappa = exp(log_kappa)` ensuring positivity. The marginal
+#' likelihood is evaluated under the prior selected by `elicit`, so that the
+#' tightness is optimised for the prior actually used in estimation.
 #'
 #' @inheritParams log_mlik_asym
 #' @param init Numeric vector of length 2; starting values for
@@ -91,8 +95,10 @@ log_mlik_asym <- function(y_list, X_list, p, s2, kappa1, kappa2,
 #' @export
 optim_hyper <- function(y_list, X_list, p, s2,
                         kappa3 = 100, unit_root_mean = FALSE,
+                        elicit = c("structural", "reduced"),
                         init = c(0.04, 0.004)) {
 
+    elicit <- match.arg(elicit)
     check_lists(y_list, X_list, p)
     if (length(s2) != length(y_list) || !is.numeric(s2) || any(!is.finite(s2)) || any(s2 <= 0))
         stop("`s2` must be a vector of positive residual variances, one per equation ",
@@ -104,7 +110,8 @@ optim_hyper <- function(y_list, X_list, p, s2,
     neg_log_ml <- function(log_kappa) {
         k1 <- exp(log_kappa[1])
         k2 <- exp(log_kappa[2])
-        -log_mlik_asym(y_list, X_list, p, s2, k1, k2, kappa3, unit_root_mean)
+        -log_mlik_asym(y_list, X_list, p, s2, k1, k2, kappa3, unit_root_mean,
+                       elicit = elicit)
     }
 
     opt <- stats::optim(log(init), neg_log_ml, method = "Nelder-Mead",

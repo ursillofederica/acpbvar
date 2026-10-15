@@ -12,6 +12,12 @@
 #' @param kappa3 Intercept prior variance, passed to [build_prior_asym()].
 #' @param unit_root_mean Logical; whether to centre the first own-lag prior
 #'   at one. Default `FALSE`.
+#' @param elicit Where the Minnesota prior on the lag coefficients is
+#'   elicited: `"structural"` (default) places it directly on the structural
+#'   coefficients; `"reduced"` places it on the reduced-form coefficients and
+#'   derives the implied structural hyperparameters (Chan 2022, Online
+#'   Supplement, Section 2), as in the replication code of Chan's empirical
+#'   application. Passed to [build_prior_asym()] and [optim_hyper()].
 #' @param var_names Optional character vector of variable names of length
 #'   `n`. Stored in the returned spec.
 #' @param seed Optional integer seed passed to [set.seed()] before drawing.
@@ -35,8 +41,10 @@
 #' @export
 post_sim <- function(Y, p, R,
                      kappa3 = 100, unit_root_mean = FALSE,
+                     elicit = c("structural", "reduced"),
                      var_names = NULL, seed = NULL) {
 
+    elicit <- match.arg(elicit)
     check_Y(Y, fun = "post_sim")
     check_count(p, "p", min = 1L, max = nrow(Y) - 1L)
     check_count(R, "R", min = 1L)
@@ -55,13 +63,14 @@ post_sim <- function(Y, p, R,
     s2out <- build_s2(dat$y_list)
 
     opt <- optim_hyper(dat$y_list, dat$X_list, p, s2out$s2,
-                       kappa3, unit_root_mean)
+                       kappa3, unit_root_mean, elicit = elicit)
     if (opt$convergence != 0)
         warning(sprintf("optim_hyper did not converge (code %d); kappa estimates may be unreliable.",
                         opt$convergence), call. = FALSE)
 
     prior <- build_prior_asym(dat$y_list, p, s2out$s2,
-                              opt$kappa1, opt$kappa2, kappa3, unit_root_mean)
+                              opt$kappa1, opt$kappa2, kappa3, unit_root_mean,
+                              elicit = elicit)
 
 
     # Posterior quantities do not depend on the draw: computed once per equation
@@ -103,6 +112,7 @@ post_sim <- function(Y, p, R,
             log_ml    = opt$log_ml,
             convergence = opt$convergence,
             s2        = s2out$s2,
+            elicit    = elicit,
             var_names = var_names
         ),
         dat = dat
