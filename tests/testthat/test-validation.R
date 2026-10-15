@@ -90,3 +90,26 @@ test_that("build_s2 matches an OLS AR(4) fit with intercept (mean squared residu
     expect_equal(s2[2], mean(r^2))
     expect_equal(build_s2(list(c(1, 2, 3, 2)))$s2, var(c(1, 2, 3, 2)))   # too short: sample variance
 })
+
+test_that("elicit = 'reduced' adds the Supplement Section 2 correction and leaves the rest unchanged", {
+    sim <- simulate_var_example(T = 120, seed = 1)
+    dat <- build_yX(sim$Y, p = 1L)
+    s2  <- build_s2(dat$y_list)$s2
+    a <- build_prior_asym(dat$y_list, 1L, s2, 0.04, 0.004)
+    b <- build_prior_asym(dat$y_list, 1L, s2, 0.04, 0.004, elicit = "reduced")
+
+    expect_equal(b$V_beta[[1]], a$V_beta[[1]])                        # first equation unchanged
+    expect_equal(b$V_beta[[2]], a$V_beta[[2]] + a$V_beta[[1]])        # one addend
+    expect_equal(b$V_beta[[3]], a$V_beta[[3]] + a$V_beta[[1]] + a$V_beta[[2]])
+    expect_equal(b$m_beta, a$m_beta)                                  # means unchanged
+    expect_equal(b$V_alpha, a$V_alpha)
+    expect_equal(b$nu, a$nu)
+    expect_equal(b$S, a$S)
+
+    # unit-root mean: equation 2 also receives m_1^2 / s2_1 at the first own lag of variable 1
+    au <- build_prior_asym(dat$y_list, 1L, s2, 0.04, 0.004, unit_root_mean = TRUE)
+    bu <- build_prior_asym(dat$y_list, 1L, s2, 0.04, 0.004, unit_root_mean = TRUE, elicit = "reduced")
+    expect_equal(bu$V_beta[[2]] - (au$V_beta[[2]] + au$V_beta[[1]]), c(0, 1 / s2[1], 0, 0))
+
+    expect_error(build_prior_asym(dat$y_list, 1L, s2, 0.04, 0.004, elicit = "foo"))
+})
