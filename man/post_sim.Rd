@@ -10,6 +10,7 @@ post_sim(
   R,
   kappa3 = 100,
   unit_root_mean = FALSE,
+  elicit = c("structural", "reduced"),
   var_names = NULL,
   seed = NULL
 )
@@ -26,6 +27,13 @@ variables.}
 
 \item{unit_root_mean}{Logical; whether to centre the first own-lag prior
 at one. Default \code{FALSE}.}
+
+\item{elicit}{Where the Minnesota prior on the lag coefficients is
+elicited: \code{"structural"} (default) places it directly on the structural
+coefficients; \code{"reduced"} places it on the reduced-form coefficients and
+derives the implied structural hyperparameters (Chan 2022, Online
+Supplement, Section 2), as in the replication code of Chan's empirical
+application. Passed to \code{\link[=build_prior_asym]{build_prior_asym()}} and \code{\link[=optim_hyper]{optim_hyper()}}.}
 
 \item{var_names}{Optional character vector of variable names of length
 \code{n}. Stored in the returned spec.}

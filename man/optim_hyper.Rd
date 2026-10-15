@@ -11,6 +11,7 @@ optim_hyper(
   s2,
   kappa3 = 100,
   unit_root_mean = FALSE,
+  elicit = c("structural", "reduced"),
   init = c(0.04, 0.004)
 )
 }
@@ -26,6 +27,15 @@ diffuse choice.}
 coefficient on the first own lag to \code{1} (random-walk prior); otherwise
 zero. Default \code{FALSE}.}
 
+\item{elicit}{Where the Minnesota prior on the lag coefficients is
+elicited: \code{"structural"} (default) places it directly on the structural
+coefficients; \code{"reduced"} places it on the reduced-form coefficients and
+derives the implied structural hyperparameters (Chan 2022, Online
+Supplement, Section 2): prior means are unchanged and the prior variance
+of equation \code{i} is augmented by the sum, over the equations ordered
+before it, of their prior variances plus their squared prior means
+divided by the residual variance.}
+
 \item{init}{Numeric vector of length 2; starting values for
 \verb{(kappa1, kappa2)}. Default \code{c(0.04, 0.004)}.}
 }
@@ -37,8 +47,9 @@ A list with \code{kappa1}, \code{kappa2}, the optimised \code{log_ml}, and the
 Selects the own-lag and cross-lag tightness parameters
 \eqn{(\kappa_1, \kappa_2)} by maximising the closed-form log marginal
 likelihood. Optimisation is performed by Nelder-Mead in log-space, with the
-transformation \code{kappa = exp(log_kappa)} ensuring positivity; values outside
-the unit interval are penalised with a large constant.
+transformation \code{kappa = exp(log_kappa)} ensuring positivity. The marginal
+likelihood is evaluated under the prior selected by \code{elicit}, so that the
+tightness is optimised for the prior actually used in estimation.
 }
 \examples{
 sim <- simulate_var_example(T = 120, seed = 1)
