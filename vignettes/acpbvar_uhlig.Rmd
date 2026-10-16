@@ -35,8 +35,8 @@ is missing, the code chunks below are not run.
 
 The `monetary` dataset of bsvarSIGNs is sourced from the replication
 package of Antolín-Díaz and Rubio-Ramírez (2018). It comprises six monthly
-time series spanning January 1965 to August 2007 (Uhlig stops in 2003):
-real GDP, GDP deflator, consumer price index (CPI), total reserves and
+time series spanning January 1965 to November 2007 (Uhlig stops in 2003):
+real GDP, GDP deflator, a commodity price index, total reserves and
 non-borrowed reserves, all in logarithms, and the federal funds rate in
 percentage points. The logarithmic values are multiplied by 100 here, so
 that the responses read as percentages.
@@ -45,8 +45,8 @@ that the responses read as percentages.
 data("monetary", package = "bsvarSIGNs")
 Y <- as.matrix(monetary)
 Y[, 1:5] <- 100 * Y[, 1:5]
-var_names <- c("real GDP", "GDP deflator", "CPI", "total reserves",
-               "non-borrowed reserves", "fed funds")
+var_names <- c("real GDP", "GDP deflator", "commodity prices",
+               "total reserves", "non-borrowed reserves", "fed funds")
 colnames(Y) <- var_names
 dim(Y)
 round(head(Y, 3), 2)
@@ -73,7 +73,7 @@ t_post[["elapsed"]]
 
 A single shock is identified (`n_id = 1`, `S` is a row vector). According
 to Uhlig, after a contractionary monetary policy shock prices (deflator,
-CPI) and non-borrowed reserves do not rise, as the Federal Reserve drains
+commodity prices) and non-borrowed reserves do not rise, as the Federal Reserve drains
 liquidity, and the federal funds rate does not fall. The entry for real GDP
 is zero, i.e. unrestricted: the effect on output is the question of the
 exercise and is not imposed. Total reserves are also left unrestricted,
