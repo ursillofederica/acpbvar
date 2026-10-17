@@ -43,7 +43,7 @@ Default \code{NULL}: the random number generator is left untouched, so set the
 seed yourself before the call if you need reproducibility.}
 }
 \value{
-A list with \code{samples} (the posterior draws of \code{theta} and
+An object of class \code{"acpbvar_post"} (a list with \code{print} method) with \code{samples} (the posterior draws of \code{theta} and
 \code{sigma2}), \code{spec} (sampler configuration, optimised tightness, log
 marginal likelihood, the \code{convergence} code returned by \code{\link[stats:optim]{stats::optim()}}
 for the hyperparameter search, residual variances, variable names), and \code{dat}
