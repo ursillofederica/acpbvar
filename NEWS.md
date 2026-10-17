@@ -12,6 +12,12 @@
 * `plot_irfs()` gains `vars` and `shocks` to select panels, `ref` to overlay
   a second set of responses (dashed median, dotted band), `xlab` and `mfrow`;
   with a single shock the panel titles are the variable names.
+* `simulate_var_example()`: the impact matrix is recentred so that the true
+  responses are typical elements of the sign-identified set (same signs and
+  persistence as before).
+* Uhlig vignette: the third series is the commodity price index of Uhlig
+  (2005), not the CPI (the `monetary` help page of bsvarSIGNs mislabels it);
+  the sample ends in November 2007.
 
 # acpbvar 0.1.0
 
