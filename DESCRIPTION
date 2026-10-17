@@ -1,7 +1,7 @@
 Package: acpbvar
 Type: Package
 Title: Bayesian Structural VARs with Asymmetric Conjugate Priors
-Version: 0.1.0
+Version: 0.2.0
 Authors@R:
     person(given = "Federica",
            family = "Ursillo",
@@ -9,9 +9,8 @@ Authors@R:
            email = "federica.ursillo@outlook.com")
 Description: Implements Bayesian estimation of structural Vector Autoregressions
     in the asymmetric A-form of Chan (2022) <doi:10.3982/QE1381>, with an
-    asymmetric Minnesota prior
-    whose own-lag, cross-lag, and intercept hyperparameters are optimised by
-    Empirical Bayes via the closed-form marginal likelihood. Exact
+    asymmetric Minnesota prior whose own-lag and cross-lag hyperparameters
+    are selected by empirical Bayes via the closed-form marginal likelihood. Exact
     equation-by-equation posterior simulation in the structural form
     (independent Normal-Inverse-Gamma draws) provides posterior draws of
     the reduced-form parameters; structural identification through sign

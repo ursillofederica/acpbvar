@@ -6,38 +6,58 @@
 \usage{
 plot_irfs(
   irfs,
+  vars = NULL,
+  shocks = NULL,
   var_names = NULL,
   shock_names = NULL,
   probs = c(0.16, 0.84),
+  ref = NULL,
   col_med = "black",
   col_band = "steelblue",
+  col_ref = "black",
   alpha_band = 0.3,
+  xlab = "",
   ylab = "",
-  main_cex = 0.9
+  main_cex = 0.9,
+  mfrow = NULL
 )
 }
 \arguments{
 \item{irfs}{A four-dimensional array of impulse responses as returned by
-\code{\link[=collect_irfs]{collect_irfs()}}.}
+\code{\link[=collect_irfs]{collect_irfs()}} (variable x horizon x shock x draw).}
+
+\item{vars, shocks}{Which variables and shocks to plot: integer indices or
+names matching the dimnames of \code{irfs}. Default \code{NULL} plots all.}
 
 \item{var_names}{Optional character vector of variable names of length
-\code{n}; defaults to \code{"Var i"}.}
+\code{n}; defaults to the dimnames of \code{irfs}, or \code{"Var i"}.}
 
 \item{shock_names}{Optional character vector of shock names of length
-\code{n_shocks}; defaults to \code{"Shock k"}.}
+\code{n_shocks}; defaults to the dimnames of \code{irfs}, or \code{"Shock k"}.}
 
 \item{probs}{Two-element numeric vector of quantiles for the credible
 band. Default \code{c(0.16, 0.84)}.}
+
+\item{ref}{Optional responses to overlay (dashed median, dotted band at
+the same \code{probs}): either a four-dimensional array with the same
+variables and horizons as \code{irfs} (subset with the same \code{vars} and
+\code{shocks}), or a three-dimensional array (variable x horizon x draw) when
+a single shock is plotted.}
 
 \item{col_med}{Colour of the posterior median line. Default \code{"black"}.}
 
 \item{col_band}{Colour of the credible band. Default \code{"steelblue"}.}
 
+\item{col_ref}{Colour of the overlaid responses. Default \code{"black"}.}
+
 \item{alpha_band}{Transparency of the credible band. Default \code{0.3}.}
 
-\item{ylab}{Y-axis label. Default empty.}
+\item{xlab, ylab}{Axis labels. Defaults \code{""}.}
 
 \item{main_cex}{Scaling factor for panel titles. Default \code{0.9}.}
+
+\item{mfrow}{Panel layout passed to \code{\link[graphics:par]{graphics::par()}}; default one row per
+variable and one column per shock.}
 }
 \value{
 Called for its side effect (a grid of base-R plots). Invisibly
@@ -45,18 +65,23 @@ returns \code{NULL}.
 }
 \description{
 Produces a grid of base-R plots displaying the posterior median impulse
-response of each variable to each identified shock, together with a
-shaded credible band defined by the quantiles in \code{probs}.
+response of each selected variable to each selected shock, together with a
+shaded credible band defined by the quantiles in \code{probs}. A second set of
+responses (\code{ref}), for example from another package or the true responses
+of a simulated process, can be overlaid for comparison.
 }
 \examples{
 sim  <- simulate_var_example(T = 120, seed = 1)
 mcmc <- post_sim(sim$Y, p = 1L, R = 200L)
-S    <- rbind(c(1, -1, 0), c(1, 1, 0), c(-1, -1, 1))
+S    <- rbind(supply = c(1, -1, 0), demand = c(1, 1, 0), monetary = c(-1, -1, 1))
 acc  <- sign_restrict(mcmc, S, max_tries = 500L, verbose = FALSE)
 irfs <- collect_irfs(acc, n = 3L, p = 1L, H = 8L)
 
-plot_irfs(irfs,
-          var_names   = sim$var_names,
-          shock_names = c("supply", "demand", "monetary"),
-          probs       = c(0.16, 0.84))     # 68\% posterior band
+plot_irfs(irfs, probs = c(0.16, 0.84))               # all panels, 68\% band
+plot_irfs(irfs, shocks = "monetary", mfrow = c(1, 3)) # one shock, one row
+
+# overlay the true responses of the simulated process
+irf_true <- compute_irf(sim$impact_true, cbind(sim$intercept_true, sim$B_true),
+                        n = 3L, p = 1L, H = 8L)
+plot_irfs(irfs, ref = array(irf_true, c(dim(irf_true), 1)))
 }
