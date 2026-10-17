@@ -125,6 +125,7 @@ sign_restrict <- function(mcmc, S, n_id = nrow(S), horizons = 0L,
 
     check_mcmc(mcmc)
     check_count(horizons, "horizons", min = 0L)
+    shock_names <- if (is.matrix(S)) rownames(S) else dimnames(S)[[1]]
     S <- check_S(S, mcmc$spec$n, horizons)
     check_count(n_id, "n_id", min = 1L, max = nrow(S))
     check_count(max_tries, "max_tries", min = 1L)
@@ -243,5 +244,10 @@ sign_restrict <- function(mcmc, S, n_id = nrow(S), horizons = 0L,
     attr(accepted, "n_tries") <- n_tries_v
     attr(accepted, "failed_draws") <- failed
     attr(accepted, "method") <- method
+    attr(accepted, "max_tries") <- max_tries
+    attr(accepted, "R") <- R_tot
+    attr(accepted, "var_names") <- mcmc$spec$var_names
+    attr(accepted, "shock_names") <- shock_names
+    class(accepted) <- "acpbvar_signs"
     accepted
 }

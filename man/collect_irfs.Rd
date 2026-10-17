@@ -12,8 +12,10 @@ collect_irfs(accepted, n, p, H)
 \item{n, p, H}{As in \code{\link[=compute_irf]{compute_irf()}}.}
 }
 \value{
-A four-dimensional array of dimension
-\verb{n x (H + 1) x n x n_accepted}.
+An object of class \code{"acpbvar_irf"}: a four-dimensional array of
+dimension \verb{n x (H + 1) x n x n_accepted} (variable x horizon x shock x
+draw), with variable and shock names as dimnames, and \code{print},
+\code{summary} and \code{plot} methods. Subsetting with \code{[} returns a plain array.
 }
 \description{
 Loops \code{\link[=compute_irf]{compute_irf()}} over the list of accepted rotations returned by

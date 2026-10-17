@@ -24,7 +24,7 @@
 #'   Default `NULL`: the random number generator is left untouched, so set the
 #'   seed yourself before the call if you need reproducibility.
 #'
-#' @return A list with `samples` (the posterior draws of `theta` and
+#' @return An object of class `"acpbvar_post"` (a list with `print` method) with `samples` (the posterior draws of `theta` and
 #'   `sigma2`), `spec` (sampler configuration, optimised tightness, log
 #'   marginal likelihood, the `convergence` code returned by [stats::optim()]
 #'   for the hyperparameter search, residual variances, variable names), and `dat`
@@ -101,7 +101,7 @@ post_sim <- function(Y, p, R,
             utils::flush.console()
         }
     }
-    list(
+    structure(list(
         samples = samples,
         spec    = list(
             n         = n,
@@ -116,5 +116,5 @@ post_sim <- function(Y, p, R,
             var_names = var_names
         ),
         dat = dat
-    )
+    ), class = "acpbvar_post")
 }

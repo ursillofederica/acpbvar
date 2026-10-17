@@ -59,8 +59,10 @@ compute_irf <- function(impact, B_rf, n, p, H) {
 #' @param accepted The list of accepted draws returned by [sign_restrict()].
 #' @param n,p,H As in [compute_irf()].
 #'
-#' @return A four-dimensional array of dimension
-#'   `n x (H + 1) x n x n_accepted`.
+#' @return An object of class `"acpbvar_irf"`: a four-dimensional array of
+#'   dimension `n x (H + 1) x n x n_accepted` (variable x horizon x shock x
+#'   draw), with variable and shock names as dimnames, and `print`,
+#'   `summary` and `plot` methods. Subsetting with `[` returns a plain array.
 #'
 #' @examples
 #' sim  <- simulate_var_example(T = 120, seed = 1)
@@ -99,5 +101,14 @@ collect_irfs <- function(accepted, n, p, H) {
         )
     }
 
+    # names travel with the object: variables from post_sim(), shocks from the rows of S
+    var_names   <- attr(accepted, "var_names")
+    shock_names <- attr(accepted, "shock_names")
+    if (is.null(var_names))   var_names   <- paste0("Var ", seq_len(n))
+    if (is.null(shock_names)) shock_names <- character(0)
+    if (length(shock_names) < n)       # partially identified: unnamed rotations after the identified ones
+        shock_names <- c(shock_names, paste0("Shock ", seq(length(shock_names) + 1L, n)))
+    dimnames(irfs) <- list(var_names, paste0("h", 0:H), shock_names, NULL)
+    class(irfs) <- "acpbvar_irf"
     irfs
 }
