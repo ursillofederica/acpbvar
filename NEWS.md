@@ -1,3 +1,18 @@
+# acpbvar 0.2.0
+
+* S3 classes with methods: `post_sim()` returns an `"acpbvar_post"`,
+  `sign_restrict()` an `"acpbvar_signs"`, `collect_irfs()` an `"acpbvar_irf"`,
+  each with a `print()` method; `summary()` on impulse responses gives the
+  quantiles by horizon for selected variables and shocks; `plot()` on impulse
+  responses selects panels. The objects remain the documented lists and
+  arrays, so existing code is unaffected; subsetting an `"acpbvar_irf"` with
+  `[` returns a plain array.
+* `collect_irfs()` carries variable names (from `post_sim()`) and shock names
+  (from the rows of `S`) as dimnames.
+* `plot_irfs()` gains `vars` and `shocks` to select panels, `ref` to overlay
+  a second set of responses (dashed median, dotted band), `xlab` and `mfrow`;
+  with a single shock the panel titles are the variable names.
+
 # acpbvar 0.1.0
 
 * New vignette on real data: the monetary policy shock of Uhlig (2005) on

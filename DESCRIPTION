@@ -1,7 +1,7 @@
 Package: acpbvar
 Type: Package
 Title: Bayesian Structural VARs with Asymmetric Conjugate Priors
-Version: 0.1.0
+Version: 0.2.0
 Authors@R:
     person(given = "Federica",
            family = "Ursillo",
