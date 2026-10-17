@@ -41,11 +41,11 @@ NULL
 print.acpbvar_post <- function(x, ...) {
     sp <- x$spec
     cat("acpbvar posterior: ", sp$n, " variables, ", sp$p, " lags, ", sp$TT,
-        " observations, ", sp$R, " exact draws\n", sep = "")
-    cat("  hyperparameters (empirical Bayes, elicit = \"", sp$elicit, "\"): kappa1 = ",
-        format(sp$kappa[["kappa1"]], digits = 4), ", kappa2 = ",
-        format(sp$kappa[["kappa2"]], digits = 4),
-        "; optimiser convergence code ", sp$convergence, "\n", sep = "")
+        " observations\n", sep = "")
+    cat("  ", sp$R, " exact draws; elicitation \"", sp$elicit, "\"\n", sep = "")
+    cat("  empirical Bayes: kappa1 = ", format(sp$kappa[["kappa1"]], digits = 4),
+        ", kappa2 = ", format(sp$kappa[["kappa2"]], digits = 4),
+        " (convergence code ", sp$convergence, ")\n", sep = "")
     cat("  log marginal likelihood: ", format(sp$log_ml, digits = 6), "\n", sep = "")
     if (!is.null(sp$var_names))
         cat("  variables: ", paste(sp$var_names, collapse = ", "), "\n", sep = "")
@@ -58,12 +58,14 @@ print.acpbvar_signs <- function(x, ...) {
     R_tot  <- attr(x, "R"); n_acc <- length(x)
     method <- attr(x, "method"); nt <- attr(x, "n_tries")
     sn <- attr(x, "shock_names")
-    cat("acpbvar sign-identified draws: ", n_acc, " of ", R_tot, " posterior draws accepted (",
-        sprintf("%.1f%%", 100 * n_acc / R_tot), "), acceptance scheme \"", method, "\"\n", sep = "")
-    if (!is.null(sn)) cat("  identified shocks: ", paste(sn, collapse = ", "), "\n", sep = "")
+    cat("acpbvar sign-identified draws: ", n_acc, " of ", R_tot, " accepted (",
+        sprintf("%.1f%%", 100 * n_acc / R_tot), ")\n", sep = "")
+    cat("  acceptance scheme \"", method, "\"", sep = "")
+    if (!is.null(sn)) cat("; identified shocks: ", paste(sn, collapse = ", "), sep = "")
+    cat("\n")
     if (method == "per_draw" && length(nt) > 0)
         cat("  rotations per accepted draw: median ", stats::median(nt), ", mean ",
-            format(mean(nt), digits = 3), ", max ", max(nt), " (max_tries = ",
+            format(mean(nt), digits = 3), ", max ", max(nt), "\n  (max_tries = ",
             attr(x, "max_tries"), ")\n", sep = "")
     nf <- length(attr(x, "failed_draws"))
     if (nf > 0) cat("  ", nf, " draws dropped: no admissible rotation within max_tries\n", sep = "")
@@ -74,8 +76,9 @@ print.acpbvar_signs <- function(x, ...) {
 #' @export
 print.acpbvar_irf <- function(x, ...) {
     d <- dim(x); dn <- dimnames(x)
-    cat("acpbvar impulse responses: ", d[1], " variables x ", d[2] - 1, " horizons (0..",
-        d[2] - 1, ") x ", d[3], " shocks x ", d[4], " accepted draws\n", sep = "")
+    cat("acpbvar impulse responses: ", d[1], " variables x ", d[2] - 1,
+        " horizons (0..", d[2] - 1, ")\n  x ", d[3], " shocks x ", d[4],
+        " accepted draws\n", sep = "")
     if (!is.null(dn[[1]])) cat("  variables: ", paste(dn[[1]], collapse = ", "), "\n", sep = "")
     if (!is.null(dn[[3]])) cat("  shocks:    ", paste(dn[[3]], collapse = ", "), "\n", sep = "")
     cat("  use summary() for quantiles by horizon and plot() for the figures\n")
