@@ -48,7 +48,8 @@ print.acpbvar_post <- function(x, ...) {
         " (convergence code ", sp$convergence, ")\n", sep = "")
     cat("  log marginal likelihood: ", format(sp$log_ml, digits = 6), "\n", sep = "")
     if (!is.null(sp$var_names))
-        cat("  variables: ", paste(sp$var_names, collapse = ", "), "\n", sep = "")
+        cat(strwrap(paste("variables:", paste(sp$var_names, collapse = ", ")),
+                    width = 66, indent = 2, exdent = 4), sep = "\n")
     invisible(x)
 }
 
@@ -79,8 +80,12 @@ print.acpbvar_irf <- function(x, ...) {
     cat("acpbvar impulse responses: ", d[1], " variables x ", d[2] - 1,
         " horizons (0..", d[2] - 1, ")\n  x ", d[3], " shocks x ", d[4],
         " accepted draws\n", sep = "")
-    if (!is.null(dn[[1]])) cat("  variables: ", paste(dn[[1]], collapse = ", "), "\n", sep = "")
-    if (!is.null(dn[[3]])) cat("  shocks:    ", paste(dn[[3]], collapse = ", "), "\n", sep = "")
+    if (!is.null(dn[[1]]))
+        cat(strwrap(paste("variables:", paste(dn[[1]], collapse = ", ")),
+                    width = 66, indent = 2, exdent = 4), sep = "\n")
+    if (!is.null(dn[[3]]))
+        cat(strwrap(paste("shocks:", paste(dn[[3]], collapse = ", ")),
+                    width = 66, indent = 2, exdent = 4), sep = "\n")
     cat("  use summary() for quantiles by horizon and plot() for the figures\n")
     invisible(x)
 }
