@@ -46,9 +46,9 @@ simulate_var_example <- function(T = 200, seed = NULL) {
     # True structural impact matrix (rows = variables, cols = shocks)
     #          AS     AD     MP
     impact_true <- matrix(c(
-         0.50,  0.40, -0.30,   # output
-        -0.30,  0.50, -0.20,   # inflation
-         0.10,  0.20,  0.40    # interest rate
+         0.50,  0.20, -0.20,   # output
+        -0.60,  0.20, -0.20,   # inflation
+         0.00,  0.20,  0.40    # interest rate
     ), nrow = 3, byrow = TRUE)
 
     # True reduced-form persistence on the first lag
