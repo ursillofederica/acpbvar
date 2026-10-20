@@ -78,7 +78,7 @@ and the first accepted rotation is stored.
 }
 \examples{
 sim  <- simulate_var_example(T = 120, seed = 1)
-mcmc <- post_sim(sim$Y, p = 1L, R = 200L)
+mcmc <- post_sim(sim$Y, p = 1L, R = 100L)
 
 # Rows: identified shocks. Columns: variables (output, inflation, rate).
 # +1 / -1 restrict the sign of the impact response, 0 leaves it free.
