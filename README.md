@@ -8,9 +8,9 @@ Empirical-Bayes hyperparameter selection and sign-restriction identification.
 `acpbvar` implements the asymmetric A-form representation of structural
 Vector Autoregressions following Chan (2022). The package combines
 
-- an asymmetric Minnesota prior, with own-lag, cross-lag, and intercept
-  tightness selected by Empirical Bayes through the closed-form log marginal
-  likelihood;
+- an asymmetric Minnesota prior, with own-lag and cross-lag tightness
+  selected by Empirical Bayes through the closed-form log marginal
+  likelihood (the intercept tightness is fixed);
 - exact equation-by-equation posterior simulation in the structural form,
   with independent Normal-Inverse-Gamma draws;
 - analytical recovery of the reduced-form quantities (impact matrix, lag

@@ -7,3 +7,4 @@
 ^\.gitignore$
 ^\.DS_Store$
 ^Rplots\.pdf$
+^cran-comments\.md$
