@@ -1,4 +1,4 @@
-# DGP recovery test (CLAUDE.md 10a): on the package's own simulated VAR(1),
+# DGP recovery test: on the package's own simulated VAR(1),
 # the posterior must recover the reduced-form persistence, the reduced-form
 # innovation covariance and the sign pattern of the structural impact matrix.
 # Thresholds are deliberately loose: they guard against a broken pipeline
