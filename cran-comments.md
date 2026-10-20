@@ -1,10 +1,17 @@
+## Resubmission
+
+This is a resubmission. In the previous submission (2026-10-20) the
+example of sign_restrict() took 7.9 s on the Debian pre-test. The example
+now imposes the sign restrictions on one horizon beyond impact instead of
+three (0.3 s locally); the function is unchanged.
+
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note
 
 * This is a new submission.
-* "Possibly misspelled words in DESCRIPTION": Autoregressions, VARs and
-  Rubio (as in Rubio-Ramirez, Waggoner and Zha 2010) are correct.
+* "Possibly misspelled words in DESCRIPTION": Autoregressions, VARs, Rubio,
+  Waggoner and Zha (as in Rubio-Ramirez, Waggoner and Zha 2010) are correct.
 
 ## Test environments
 

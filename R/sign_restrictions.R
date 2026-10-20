@@ -105,9 +105,9 @@ check_sign <- function(impact, S, n_id, tol = 1e-12) {
 #' S2  <- S[1:2, ]
 #' acc2 <- sign_restrict(mcmc, S2, max_tries = 500L, verbose = FALSE)
 #'
-#' # Same signs imposed on impact and on the next three horizons (as in
-#' # Uhlig 2005): more demanding, so more rotations are screened per draw
-#' acc3 <- sign_restrict(mcmc, S, horizons = 3L, max_tries = 2000L, verbose = FALSE)
+#' # Same signs imposed on impact and on the next horizon (Uhlig 2005 uses
+#' # several): more demanding, so more rotations are screened per draw
+#' acc3 <- sign_restrict(mcmc, S, horizons = 1L, max_tries = 1000L, verbose = FALSE)
 #' summary(attr(acc3, "n_tries"))
 #'
 #' # Different signs at different horizons: one matrix per horizon
