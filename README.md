@@ -1,5 +1,7 @@
 # acpbvar
 
+[![CRAN status](https://www.r-pkg.org/badges/version/acpbvar)](https://CRAN.R-project.org/package=acpbvar)
+
 Bayesian estimation of asymmetric structural VARs in A-form, with
 Empirical-Bayes hyperparameter selection and sign-restriction identification.
 
@@ -22,6 +24,14 @@ Vector Autoregressions following Chan (2022). The package combines
 The package has no external dependencies beyond base R.
 
 ## Installation
+
+From CRAN:
+
+```r
+install.packages("acpbvar")
+```
+
+Development version from GitHub:
 
 ```r
 # install.packages("devtools")
